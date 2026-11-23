@@ -165,6 +165,11 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   .sheet h2 .x{cursor:pointer;color:var(--sub);font-size:22px;line-height:1}
   .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
   .grid2 input{min-width:0}
+  /* 日期框清除 iOS 原生渲染,与品类/品牌 combo 框同宽同左对齐 */
+  .grid2 input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;width:100%;text-align:left;font-family:inherit;font-size:16px}
+  .grid2 input[type=date]::-webkit-date-and-time-value{text-align:left}
+  /* 两列 label 统一单行等高,避免"(默认今天)"换行把日期框顶歪 */
+  .grid2 .field label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   /* 预设下拉：输入可新增，箭头展开选项 */
   .combo-input{position:relative}
   .combo-input input{padding-right:38px}
@@ -221,7 +226,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v16</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v17</div>
   </div>
 </div>
 
