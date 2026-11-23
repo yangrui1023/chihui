@@ -109,8 +109,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   .thumb img{width:100%;height:100%;object-fit:cover}
   .info{flex:1;min-width:0}
   .info .name{font-weight:650;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:22px}
-  .info .meta{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-  .info .cost{font-size:21px;font-weight:750;color:var(--accent);letter-spacing:-.4px;margin-top:6px}
+  .info .row{display:flex;align-items:center;gap:8px;margin-top:1px}
+  .info .meta{flex:1;min-width:0;font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .info .cost{flex:none;font-size:21px;font-weight:750;color:var(--accent);letter-spacing:-.4px;white-space:nowrap}
   .info .cost small{font-size:12px;font-weight:500;color:var(--sub);margin-left:4px}
   .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:6px;background:#f2f2ef;color:var(--sub);margin-right:4px}
   .edit{position:absolute;top:12px;right:12px;color:var(--sub);font-size:14px;cursor:pointer;padding:2px 6px}
@@ -210,7 +211,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v13</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v14</div>
   </div>
 </div>
 
@@ -414,6 +415,11 @@ const DEFAULT_PRESETS={
   '家居':{kinds:['床品','厨具','收纳','灯具'],brands:['宜家','无印良品']},
   '美妆':{kinds:['护肤','彩妆','香水'],brands:['兰蔻','雅诗兰黛','完美日记']}
 };
+// 无图时按品类显示的默认 emoji(可识别的品类用专属图标,其余回退📦)
+const EMOJI={
+  '服饰':'👕','鞋包':'👜','数码':'📱','家居':'🛋️','美妆':'💄',
+  '图书':'📚','运动':'🏃','配饰':'⌚','母婴':'🍼','食品':'🍫','其他':'📦'
+};
 let presets=null;
 const sortZh=(a,b)=>String(a).localeCompare(String(b),'zh');
 function normalizePresets(p){
@@ -556,17 +562,19 @@ function render(){
   L.innerHTML=arr.map(it=>{
     const isCount=it.billing==='count';
     const cost=costOf(it);
-    const emoji={服饰:'👕',数码:'📱',家居:'🛋️',图书:'📚',美妆:'💄',运动:'🏃',其他:'📦'}[it.category]||'📦';
+    const emoji=EMOJI[it.category]||'📦';
     const thumb=it.image_url?`<img src="${esc(it.image_url)}" alt="">`:emoji;
-    const meta=[it.brand,it.kind,it.color].filter(Boolean).map(esc).join(' · ');
-    const sub=isCount?`已用 ${it.use_count||0} 次`:`已用 ${daysSince(it.purchase_date)} 天`;
+    const sub=isCount?`已使用${it.use_count||0}次`:`已用 ${daysSince(it.purchase_date)} 天`;
+    const meta=[it.brand,it.kind,sub,it.color].filter(Boolean).map(esc).join(' · ');
     return `<div class="card" data-id="${it.id}">
       <div class="thumb">${thumb}</div>
       <div class="info">
         <div class="name">${esc(it.name)}</div>
-        <div class="meta"><span class="tag">${esc(it.category||'未分类')}</span>${meta}</div>
-        <div class="cost">${money(cost)}<small>${isCount?'每次':'每天'}</small></div>
-        ${isCount?`<div class="plusone" data-plus="${it.id}">＋ 记一次</div>`:`<div class="meta" style="margin-top:4px">${sub}</div>`}
+        <div class="row">
+          <div class="meta"><span class="tag">${esc(it.category||'未分类')}</span>${meta}</div>
+          <div class="cost">${money(cost)}<small>${isCount?'每次':'每天'}</small></div>
+        </div>
+        ${isCount?`<div class="plusone" data-plus="${it.id}">＋ 记一次</div>`:''}
       </div>
       <div class="edit" data-edit="${it.id}">✎</div>
     </div>`;
