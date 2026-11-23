@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f7f7f5">
 <meta name="description" content="吃灰 · 记下买过的东西，看清哪件在吃灰、哪件值回票价。">
 <meta name="apple-mobile-web-app-title" content="吃灰">
@@ -34,7 +34,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   .logo b,.brand h1 b{color:var(--accent);font-weight:800}
-  html,body{margin:0;padding:0}
+  /* 防 iOS 聚焦/竖屏自动放大:禁止文本尺寸自动调整 + 禁双击缩放 */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  html,body{margin:0;padding:0;touch-action:manipulation}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
     background:var(--bg); color:var(--ink); font-size:15px; line-height:1.5;
@@ -202,7 +204,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v11</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v12</div>
   </div>
 </div>
 
@@ -675,6 +677,13 @@ async function plusOne(id){
 
 /* ============ 事件绑定 ============ */
 function bind(){
+  // 终极防缩放兜底:iOS Safari 只对"计算字号≥16px"的输入框不自动放大。
+  // 内联样式优先级最高,任何 CSS 层叠都压不过,确保每个控件聚焦时必为16px。
+  document.addEventListener('focusin',e=>{
+    const t=e.target;
+    if(t&&/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName))t.style.fontSize='16px';
+  },true);
+
   // 预设下拉:箭头展开 / 输入即过滤 / 点选项填入 / 点外部关闭
   // 级联:品类变化时清空下级已选值(若不属于新品类),并刷新下级下拉
   const onCategoryChange=()=>{
@@ -687,9 +696,13 @@ function bind(){
     const input=$('ed'+k[0].toUpperCase()+k.slice(1));
     const box=$('list'+k[0].toUpperCase()+k.slice(1));
     const arrow=document.querySelector('.combo-arrow[data-combo="'+k+'"]');
-    const toggle=()=>{const willOpen=!box.classList.contains('open');closeCombos();if(willOpen){renderCombo(k,input.value);box.classList.add('open');}};
+    // 展开时显示全部选项(不拿已选值当过滤词,否则选中后再点只剩该项,无法改选);
+    // 只有用户主动键入时才用输入内容过滤。
+    const openAll=()=>{renderCombo(k,'');box.classList.add('open');};
+    const toggle=()=>{const willOpen=!box.classList.contains('open');closeCombos();if(willOpen)openAll();};
     if(arrow)arrow.onclick=e=>{e.stopPropagation();toggle();};
-    input.onfocus=()=>{renderCombo(k,input.value);box.classList.add('open');};
+    input.onfocus=openAll;
+    input.onclick=openAll;   // 焦点仍在输入框时再次点击也能重新展开全部
     input.oninput=()=>{if(k==='category')onCategoryChange();renderCombo(k,input.value);box.classList.add('open');};
     box.onclick=e=>{
       const opt=e.target.closest('.opt');if(!opt)return;
