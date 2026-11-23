@@ -139,9 +139,15 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   .overlay.active{display:flex}
   @media(min-width:560px){.overlay.active{align-items:center}}
   .sheet{
-    background:var(--bg);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));
+    background:var(--bg);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));
     max-height:92vh;overflow-y:auto;animation:up .22s ease;
   }
+  /* 紧凑模式:压缩表单纵向占用 */
+  .sheet .field{margin-bottom:9px}
+  .sheet h2{margin-bottom:12px}
+  .sheet label{margin-bottom:4px;font-size:12px}
+  .sheet input,.sheet select,.sheet textarea{padding:10px 12px}
+  .sheet textarea{min-height:52px}
   @media(min-width:560px){.sheet{border-radius:20px;max-height:88vh}}
   @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:translateY(0);opacity:1}}
   .sheet h2{margin:0 0 16px;font-size:18px;display:flex;align-items:center;justify-content:space-between}
@@ -161,8 +167,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   .seg button{flex:1;padding:9px;border:none;background:transparent;border-radius:9px;cursor:pointer;font-weight:600;color:var(--sub)}
   .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
   .upload{
-    border:1.5px dashed var(--line);border-radius:12px;padding:14px;text-align:center;color:var(--sub);
-    cursor:pointer;font-size:13px;background:#fff;position:relative;
+    border:1.5px dashed var(--line);border-radius:10px;padding:9px;text-align:center;color:var(--sub);
+    cursor:pointer;font-size:12px;background:#fff;position:relative;
   }
   .upload img{max-height:130px;border-radius:10px;display:block;margin:0 auto 8px}
   .rowbtns{display:flex;gap:10px;margin-top:6px}
@@ -204,7 +210,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v12</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v13</div>
   </div>
 </div>
 
@@ -253,17 +259,19 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       <div class="field"><label>价格 <span class="req">*</span></label><input id="edPrice" type="number" inputmode="decimal" step="0.01" placeholder="0.00"></div>
     </div>
     <div class="field"><label>名称 <span class="req">*</span></label><input id="edName" placeholder="给它起个名字"></div>
-    <div class="field"><label>购买日期 <span style="font-weight:400;color:#bbb">(默认今天)</span></label><input id="edDate" type="date"></div>
-    <div class="field"><label>颜色</label><input id="edColor" placeholder="如 黑色"></div>
+    <div class="grid2">
+      <div class="field"><label>购买日期 <span style="font-weight:400;color:#bbb">(默认今天)</span></label><input id="edDate" type="date"></div>
+      <div class="field"><label>颜色</label><input id="edColor" placeholder="如 黑色"></div>
+    </div>
     <div class="field">
       <label>计费方式</label>
       <div class="seg" id="edBilling">
         <button type="button" data-b="time" class="on">按时间 · 算每天</button>
         <button type="button" data-b="count">按次数 · 算每次</button>
       </div>
-    </div>
-    <div class="field" id="countField" style="display:none">
-      <label>已使用次数</label><input id="edCount" type="number" inputmode="numeric" step="1" value="0">
+      <div id="countField" style="display:none;margin-top:8px">
+        <input id="edCount" type="number" inputmode="numeric" step="1" value="0" placeholder="已使用次数">
+      </div>
     </div>
     <div class="field">
       <label>图片</label>
@@ -347,12 +355,20 @@ function show(id){
   if(el){el.classList.add('active');el.style.display='block';}
 }
 // 进入主界面:先无条件切屏,数据加载失败也不影响显示
-function enterApp(u){
+// 关键:必须拿到带 id 的完整 user 对象,否则 saveItem 里 user.id 会抛 null 错误导致"保存失败"
+async function enterApp(u){
   show('app');
   try{
     const email=(u&&u.email)||$('auEmail').value.trim()||'';
     $('whoEmail').textContent=email;
   }catch(e){}
+  // 确保全局 user 带 id:优先用传入的完整对象,否则向 Auth 取当前会话用户
+  if(!user||!user.id){
+    if(u&&u.id)user=u;
+    else{
+      try{const {data}=await client.auth.getUser();if(data&&data.user)user=data.user;}catch(e){}
+    }
+  }
   try{loadPresets();}catch(e){}
   try{loadItems();}catch(e){toast('清单加载失败:'+(e.message||'请下拉刷新'));}
 }
@@ -623,6 +639,9 @@ async function removeImage(path){
 }
 
 async function saveItem(){
+  // 兜底:若 user 尚未就绪(极端时序),向 Auth 取一次当前用户,确保 user.id 可用
+  if(!user||!user.id){try{const {data}=await client.auth.getUser();if(data&&data.user)user=data.user;}catch(e){}}
+  if(!user||!user.id){toast('登录状态失效,请退出后重新登录');return;}
   const name=$('edName').value.trim(), price=parseFloat($('edPrice').value);
   const category=$('edCategory').value.trim(), kind=$('edKind').value.trim(), brand=$('edBrand').value.trim();
   if(!category||!kind||!brand||!name||isNaN(price)){toast('请填齐 品类/种类/品牌/名称/价格');return;}
@@ -650,10 +669,13 @@ async function saveItem(){
     else{({error}=await client.from('items').insert(payload));}
     if(error)throw error;
     if(imagePathChanged&&oldImagePath&&oldImagePath!==image_path)await removeImage(oldImagePath);
-    // 新录入的分类值自动纳入预设库(该品类下)
-    if(!presets[category])presets[category]={kinds:[],brands:[]};
-    [['kinds',kind],['brands',brand]].forEach(([f,v])=>{if(v&&!presets[category][f].includes(v))presets[category][f].push(v);});
-    await savePresetsCloud();
+    // 新录入的分类值自动纳入预设库(该品类下)——失败不能阻断物品已保存的结果
+    try{
+      if(!presets)presets={};
+      if(!presets[category]||!Array.isArray(presets[category].kinds)||!Array.isArray(presets[category].brands))presets[category]={kinds:[],brands:[]};
+      [['kinds',kind],['brands',brand]].forEach(([f,v])=>{if(v&&!presets[category][f].includes(v))presets[category][f].push(v);});
+      await savePresetsCloud();
+    }catch(e){/* 预设写入失败不影响物品保存 */}
     closeEditor();await loadItems();toast(editingId?'已保存':'已添加');
   }catch(e){toast('保存失败:'+e.message);}
   finally{btn.disabled=false;btn.textContent='保存';}
@@ -739,18 +761,21 @@ function bind(){
     try{
       let err;
       if(reg){
-        ({error:err}=await client.auth.signUp({email,password:pass}));
-        if(!err){await client.auth.signInWithPassword({email,password:pass});toast('注册成功');enterApp({email});}
-        else toast(err.message);
+        const up=await client.auth.signUp({email,password:pass});err=up.error;
+        if(!err){
+          const li=await client.auth.signInWithPassword({email,password:pass});
+          toast('注册成功');
+          await enterApp(li.data?.user||up.data?.user||{email});
+        }else toast(err.message);
       }else{
-        ({error:err}=await client.auth.signInWithPassword({email,password:pass}));
-        if(!err){toast('欢迎回来');enterApp({email});}
+        const li=await client.auth.signInWithPassword({email,password:pass});err=li.error;
+        if(!err){toast('欢迎回来');await enterApp(li.data?.user||{email});}
         else toast(err.message);
       }
     }catch(e){toast('操作失败:'+(e.message||'请检查网络'));}
     b.disabled=false;b.textContent=reg?'注册并登录':'登录';
   };
-  $('logout').onclick=async()=>{await client.auth.signOut();toast('已退出');};
+  $('logout').onclick=async()=>{await client.auth.signOut();user=null;toast('已退出');};
 
   $('addBtn').onclick=()=>openEditor(null);
   $('edClose').onclick=closeEditor;
