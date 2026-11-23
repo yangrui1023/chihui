@@ -7,10 +7,10 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#f7f7f5">
-<meta name="description" content="吃灰 · 记下买过的东西，看清哪件在吃灰、哪件值回票价。每件用了几次，一天摊到几块。">
+<meta name="description" content="吃灰 · 记下买过的东西，看清哪件在吃灰、哪件值回票价。">
 <meta name="apple-mobile-web-app-title" content="吃灰">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>吃灰 · 每件摊到几块</title>
+<title>吃灰</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAYFBMVEX///////7//v7+///+/v7+/v39///+/f39/f39/Pz8/Pz6+/vz+Pny8/Pj5ebX29vIysm2sa2pnJWkgXXPYkTOX0DLWz3NWjrIWjzIWjvHWj2qaVXMWDnHWDqsRSmHQjCdxoO0AAABXklEQVR42pVTi5KDIAxMr9yVIm98VVD+/y8vgFaxztzczjhqsizZEAD+A5Ie8gcn4WphWUtW7MGasKMikF2dUXw/6YmyaZKU5bwBoHUh+Y+kfKOMtdZIuJFjseWbMFDWtwnO8CxSOcP12rVhThi84R8ECsp18zSO49R3i1ffjLx7VhS4bUu+m6NTJXxQYKB9yPlh8RrgLkRNePzY7oX5PkTLAbSRYveRP7jLAiHicim1EYdm5BKlGybcP2ohmNZMieJ9E9gIg9dSJBi1dyLvdeOJgBa9FgBfawUHm99Y5Iw1zMPkjBJv85XNIdsMYfLOaElopUAejX31Y8L0CqFFM6zqNWCZcW6xTkTfLg6e58PATeLStx0Ce80pPU8EMqSLcVmWGM29Om4gGwMnwjmHXXzU+Q30uUZYGbGzQhJpGGMNXWfsXATZ4p+Tn0/lHb68Glc4X8n6Zl3d4VX2lPkFP7AasFcxzYkAAAAASUVORK5CYII=">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script>/* Supabase JS v2 (自包含,离线可用) */
@@ -33,6 +33,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     --radius:16px;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  .logo b,.brand h1 b{color:var(--accent);font-weight:800}
   html,body{margin:0;padding:0}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
@@ -176,14 +177,14 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 <!-- ① 登录(默认显示,不依赖任何网络连接) -->
 <div class="screen center active" id="auth">
   <div class="panel">
-    <div class="logo">吃<em>灰</em></div>
+    <div class="logo"><b>吃</b><em>灰</em></div>
     <div class="desc">登录你的吃灰清单</div>
     <div class="field"><label>邮箱</label><input id="auEmail" type="email" placeholder="you@example.com" autocomplete="email"></div>
     <div class="field"><label>密码</label><input id="auPass" type="password" placeholder="至少 6 位" autocomplete="current-password"></div>
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v8</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v9</div>
   </div>
 </div>
 
@@ -191,7 +192,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 <div class="screen" id="app">
   <div class="wrap">
     <header class="top">
-      <div class="brand"><h1>吃<em>灰</em></h1><span>每件摊到几块</span></div>
+      <div class="brand"><h1><b>吃</b><em>灰</em></h1></div>
       <div class="who"><span id="whoEmail"></span><span class="out" id="logout">退出</span></div>
     </header>
 
