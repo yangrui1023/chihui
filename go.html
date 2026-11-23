@@ -190,13 +190,44 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   .rowbtns{display:flex;gap:10px;margin-top:6px}
   .rowbtns .btn{flex:1}
   .danger{color:#c0392b}
-  /* 预设管理 */
-  .preset-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:7px;cursor:pointer}
-  .preset-item.sel{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
-  .preset-item .del{color:var(--sub);font-size:18px;line-height:1;padding:0 4px;cursor:pointer;flex:0 0 auto}
-  .preset-item .del:active{color:#c0392b}
-  .preset-chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:5px 10px;margin:0 6px 6px 0;font-size:13px}
-  .preset-chip .del{color:var(--sub);cursor:pointer;font-size:15px;line-height:1}
+  /* 预设管理 —— iOS 分组列表风格 */
+  .pm-sec{margin-bottom:16px}
+  .pm-sec-h{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+  .pm-sec-t{font-size:13px;font-weight:700;color:var(--sub);letter-spacing:.5px}
+  .pm-sec-n{font-size:12px;color:var(--sub)}
+  .pm-list{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .pm-cat{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;border-bottom:1px solid var(--line);transition:background .12s;min-height:52px}
+  .pm-cat:last-child{border-bottom:none}
+  .pm-cat:active{background:var(--bg)}
+  .pm-cat.sel{background:var(--accent-soft)}
+  .pm-cat-ico{width:36px;height:36px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--bg);border-radius:10px}
+  .pm-cat.sel .pm-cat-ico{background:#fff}
+  .pm-cat-body{flex:1;min-width:0}
+  .pm-cat-name{font-size:15px;font-weight:600;color:var(--ink)}
+  .pm-cat.sel .pm-cat-name{color:var(--accent)}
+  .pm-cat-sub{font-size:12px;color:var(--sub);margin-top:1px}
+  .pm-cat-arrow{color:var(--sub);font-size:18px;flex:0 0 auto}
+  .pm-cat.sel .pm-cat-arrow{color:var(--accent)}
+  .pm-group{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+  .pm-group-h{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:11px}
+  .pm-group-h .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .pm-group-h .cnt{margin-left:auto;font-size:12px;font-weight:400;color:var(--sub)}
+  .pm-tags{display:flex;flex-wrap:wrap;gap:8px}
+  .pm-tag{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:6px 6px 6px 10px;font-size:14px;max-width:100%}
+  .pm-tag-ico{font-size:16px;flex:0 0 auto}
+  .pm-tag-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+  .pm-tag-edit,.pm-tag-del{width:24px;height:24px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:7px;color:var(--sub);font-size:14px;cursor:pointer;transition:background .12s}
+  .pm-tag-edit:active,.pm-tag-del:active{background:#fff;color:var(--accent)}
+  .pm-tag-del:active{color:#c0392b}
+  .pm-empty{font-size:13px;color:var(--sub);padding:6px 2px}
+  .pm-add{display:flex;gap:8px;margin-top:10px}
+  .pm-add input{flex:1;min-width:0;padding:10px 12px;font-size:16px}
+  .pm-add .btn{padding:10px 15px;background:var(--accent);font-size:14px}
+  .pm-tip{font-size:12px;color:var(--sub);line-height:1.6;background:var(--accent-soft);border-radius:10px;padding:9px 12px;margin-bottom:14px}
+  .pm-editbar{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .pm-editbar input{flex:1;min-width:0}
+  .pm-editbar .btn{padding:9px 14px;font-size:14px}
+  .pm-editbar .btn.ghost{background:var(--bg);color:var(--sub)}
 
   /* 登录 / 设置 */
   .center{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -226,7 +257,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v21</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v22</div>
   </div>
 </div>
 
@@ -316,32 +347,34 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 <div class="overlay" id="presetOverlay">
   <div class="sheet">
     <h2><span>预设管理</span><span class="x" id="presetClose">×</span></h2>
-    <p style="font-size:12px;color:var(--sub);margin:-6px 0 14px">品类 → 种类 / 品牌 一一对应。新增物品时选了品类,下级只显示该品类下的值。改动自动保存并同步。</p>
-    <div class="field">
-      <label>品类</label>
-      <div id="presetCats"></div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <input id="newCat" placeholder="新增品类,如 图书" style="flex:1">
-        <button class="btn" id="addCatBtn" style="flex:0 0 auto">添加</button>
+    <div class="pm-tip">品类 → 种类 / 品牌。点标签右侧铅笔可改名，改名会同步更新已录入的物品；删除只从预设移除，不影响已录入物品。</div>
+
+    <div class="pm-sec">
+      <div class="pm-sec-h"><span class="pm-sec-t">品类</span><span class="pm-sec-n" id="pmCatCount"></span></div>
+      <div class="pm-list" id="presetCats"></div>
+      <div class="pm-add">
+        <input id="newCat" placeholder="新增品类，如 图书">
+        <button class="btn" id="addCatBtn">添加</button>
       </div>
     </div>
-    <div class="field" id="presetSubWrap" style="display:none">
-      <label id="presetSubTitle">「」下的种类与品牌</label>
-      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:140px">
-          <div style="font-size:13px;color:var(--sub);margin-bottom:6px">种类</div>
-          <div id="presetKinds"></div>
-        </div>
-        <div style="flex:1;min-width:140px">
-          <div style="font-size:13px;color:var(--sub);margin-bottom:6px">品牌</div>
-          <div id="presetBrands"></div>
+
+    <div class="pm-sec" id="presetSubWrap" style="display:none">
+      <div class="pm-sec-h"><span class="pm-sec-t" id="presetSubTitle">种类与品牌</span></div>
+      <div class="pm-group">
+        <div class="pm-group-h"><span class="dot"></span>种类<span class="cnt" id="pmKindCount"></span></div>
+        <div class="pm-tags" id="presetKinds"></div>
+        <div class="pm-add">
+          <input id="newKind" placeholder="新增种类，如 连衣裙">
+          <button class="btn" id="addKindBtn">添加</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <input id="newKind" placeholder="新增种类" style="flex:1;min-width:110px">
-        <button class="btn" id="addKindBtn" style="flex:0 0 auto">加种类</button>
-        <input id="newBrand" placeholder="新增品牌" style="flex:1;min-width:110px">
-        <button class="btn" id="addBrandBtn" style="flex:0 0 auto">加品牌</button>
+      <div class="pm-group">
+        <div class="pm-group-h"><span class="dot"></span>品牌<span class="cnt" id="pmBrandCount"></span></div>
+        <div class="pm-tags" id="presetBrands"></div>
+        <div class="pm-add">
+          <input id="newBrand" placeholder="新增品牌，如 优衣库">
+          <button class="btn" id="addBrandBtn">添加</button>
+        </div>
       </div>
     </div>
   </div>
@@ -551,6 +584,7 @@ function closeCombos(){document.querySelectorAll('.combo-list.open').forEach(x=>
 
 /* ---- 预设管理界面 ---- */
 let presetSel=null; // 当前选中的品类
+const CAT_ICO={'服饰':'👗','鞋包':'👜','数码':'📱','家居':'🛋️','美妆':'💄','图书':'📚','运动':'🏃','配饰':'💍','母婴':'🍼','食品':'🍫','其他':'📦'};
 function openPresetMgr(){
   presetSel=categoryList()[0]||null;
   renderPresetMgr();
@@ -560,18 +594,47 @@ function closePresetMgr(){$('presetOverlay').classList.remove('active');}
 function renderPresetMgr(){
   const cats=categoryList();
   if(presetSel&&!cats.includes(presetSel))presetSel=cats[0]||null;
-  $('presetCats').innerHTML=cats.length?cats.map(c=>
-    `<div class="preset-item ${c===presetSel?'sel':''}" data-cat="${esc(c)}"><span>${esc(c)}</span><span class="del" data-delcat="${esc(c)}" title="删除品类">×</span></div>`
-  ).join(''):'<div style="color:var(--sub);font-size:13px">还没有品类,在下面添加一个</div>';
+  $('pmCatCount').textContent=cats.length+' 个';
+  $('presetCats').innerHTML=cats.length?cats.map(c=>{
+    const ks=kindsOf(c).length,bs=brandsOf(c).length;
+    return `<div class="pm-cat ${c===presetSel?'sel':''}" data-cat="${esc(c)}">
+      <span class="pm-cat-ico">${CAT_ICO[c]||'📦'}</span>
+      <span class="pm-cat-body"><span class="pm-cat-name">${esc(c)}</span><span class="pm-cat-sub">${ks} 种类 · ${bs} 品牌</span></span>
+      ${c===presetSel
+        ? `<span class="pm-tag-edit" data-editcat="${esc(c)}" title="改名">✎</span><span class="pm-tag-del" data-delcat="${esc(c)}" title="删除">×</span>`
+        : '<span class="pm-cat-arrow">›</span>'}
+    </div>`;
+  }).join(''):'<div class="pm-empty" style="padding:14px">还没有品类，在下面添加一个</div>';
   const wrap=$('presetSubWrap');
   if(!presetSel){wrap.style.display='none';return;}
   wrap.style.display='block';
   $('presetSubTitle').textContent='「'+presetSel+'」下的种类与品牌';
-  const chips=(arr,type)=>arr.length?arr.map(v=>
-    `<span class="preset-chip">${esc(v)}<span class="del" data-deltype="${type}" data-delval="${esc(v)}" title="删除">×</span></span>`
-  ).join(''):'<span style="color:var(--sub);font-size:12px">暂无</span>';
-  $('presetKinds').innerHTML=chips(kindsOf(presetSel),'kind');
-  $('presetBrands').innerHTML=chips(brandsOf(presetSel),'brand');
+  const kinds=kindsOf(presetSel),brands=brandsOf(presetSel);
+  $('pmKindCount').textContent=kinds.length+' 项';
+  $('pmBrandCount').textContent=brands.length+' 项';
+  const chips=(arr,type)=>arr.length?arr.map(v=>{
+    const ico=type==='kind'?(EMOJI[v]||'🏷️'):'🔖';
+    return `<span class="pm-tag"><span class="pm-tag-ico">${ico}</span><span class="pm-tag-name">${esc(v)}</span>
+      <span class="pm-tag-edit" data-edit="${type}" data-val="${esc(v)}" title="改名">✎</span>
+      <span class="pm-tag-del" data-del="${type}" data-val="${esc(v)}" title="删除">×</span></span>`;
+  }).join(''):'<span class="pm-empty">暂无，在下方添加</span>';
+  $('presetKinds').innerHTML=chips(kinds,'kind');
+  $('presetBrands').innerHTML=chips(brands,'brand');
+}
+// 同步重命名已录入物品里引用旧值的字段（按品类+字段定位）
+async function syncRenameItems(category,field,oldVal,newVal){
+  if(!Array.isArray(items)||!items.length)return 0;
+  let n=0;
+  const changed=[];
+  items.forEach(it=>{
+    if(it.category===category&&it[field]===oldVal){it[field]=newVal;changed.push(it.id);n++;}
+  });
+  if(!n)return 0;
+  // 逐条更新云端；失败不阻断预设本身
+  for(const id of changed){
+    try{await client.from('items').update({[field]:newVal}).eq('id',id);}catch(e){}
+  }
+  return n;
 }
 async function addCategory(){
   const v=$('newCat').value.trim();if(!v){toast('请输入品类名');return;}
@@ -587,16 +650,63 @@ async function addSubValue(type){
   if(arr.includes(v)){toast('已存在');return;}
   arr.push(v);inp.value='';await savePresetsCloud();buildOptions();renderPresetMgr();toast('已添加');
 }
+// 改名：品类 / 种类 / 品牌
+async function renameCategory(c){
+  const nv=prompt('品类「'+c+'」改名为：',c);
+  if(nv===null)return;
+  const v=nv.trim();
+  if(!v){toast('名称不能为空');return;}
+  if(v===c)return;
+  if(presets[v]){toast('该品类已存在');return;}
+  // 重建 presets 保持顺序，键改名
+  const out={};
+  Object.keys(presets).forEach(k=>{out[k===c?v:k]=presets[k];});
+  presets=out;
+  const n=await syncCategoryItems(c,v);
+  presetSel=v;
+  await savePresetsCloud();buildOptions();render();renderPresetMgr();
+  toast('已改名为「'+v+'」'+(n?'，并同步 '+n+' 件物品':''));
+}
+// 品类改名时物品 category 字段同步（单独实现，避免上面占位误改）
+async function syncCategoryItems(oldC,newC){
+  if(!Array.isArray(items)||!items.length)return 0;
+  const changed=items.filter(it=>it.category===oldC).map(it=>it.id);
+  items.forEach(it=>{if(it.category===oldC)it.category=newC;});
+  for(const id of changed){try{await client.from('items').update({category:newC}).eq('id',id);}catch(e){}}
+  return changed.length;
+}
+async function renameSubValue(type,oldVal){
+  if(!presets[presetSel])return;
+  const key=type==='kind'?'kinds':'brands';
+  const label=type==='kind'?'种类':'品牌';
+  const nv=prompt(label+'「'+oldVal+'」改名为：',oldVal);
+  if(nv===null)return;
+  const v=nv.trim();
+  if(!v){toast('名称不能为空');return;}
+  if(v===oldVal)return;
+  const arr=presets[presetSel][key];
+  if(arr.includes(v)){toast('已存在同名'+label);return;}
+  arr[arr.indexOf(oldVal)]=v;
+  const field=key; // kinds->kinds? 物品字段是 kind/brand
+  const itemField=type==='kind'?'kind':'brand';
+  const n=await syncRenameItems(presetSel,itemField,oldVal,v);
+  await savePresetsCloud();buildOptions();render();renderPresetMgr();
+  toast('已改名'+(n?'，并同步 '+n+' 件物品':''));
+}
 async function delCategory(c){
-  if(!confirm('删除品类「'+c+'」?该品类下的种类和品牌也会删除。\n(已录入的物品不受影响)'))return;
+  const cnt=Array.isArray(items)?items.filter(it=>it.category===c).length:0;
+  if(!confirm('删除品类「'+c+'」？该品类下的种类和品牌也会删除。\n'+(cnt?'已有 '+cnt+' 件物品使用该品类，物品会保留原值但不再有预设。\n':'')+'此操作不可撤销。'))return;
   delete presets[c];
   await savePresetsCloud();buildOptions();renderPresetMgr();toast('已删除品类');
 }
 async function delSubValue(type,v){
   if(!presets[presetSel])return;
   const key=type==='kind'?'kinds':'brands';
+  const itemField=type==='kind'?'kind':'brand';
+  const cnt=Array.isArray(items)?items.filter(it=>it.category===presetSel&&it[itemField]===v).length:0;
+  if(!confirm('从预设中删除「'+v+'」？\n'+(cnt?'已有 '+cnt+' 件物品使用它，物品会保留原值。\n':'')+'物品不会被删除。'))return;
   presets[presetSel][key]=presets[presetSel][key].filter(x=>x!==v);
-  await savePresetsCloud();buildOptions();renderPresetMgr();toast('已删除');
+  await savePresetsCloud();buildOptions();renderPresetMgr();toast('已从预设移除');
 }
 function buildOptions(){
   const fill=(sel,arr,label)=>{
@@ -644,7 +754,7 @@ function render(){
     const emoji=EMOJI[it.kind]||EMOJI[it.category]||'📦';
     const thumb=it.image_url?`<img src="${esc(it.image_url)}" alt="">`:emoji;
     const sub=isCount?`已用 ${it.use_count||0} 次`:`已用 ${daysSince(it.purchase_date)} 天`;
-    const meta=[it.category||'未分类',it.kind,sub].filter(Boolean).map(esc).join(' · ');
+    const meta=[it.category||'未分类',it.kind,it.brand,sub].filter(Boolean).map(esc).join(' · ');
     const using=it.status!=='idle';
     const costLabel=isCount?'单次成本':'日均成本';
     const unit=isCount?'/次':'/天';
@@ -854,13 +964,21 @@ function bind(){
   $('newKind').onkeydown=e=>{if(e.key==='Enter')addSubValue('kind');};
   $('newBrand').onkeydown=e=>{if(e.key==='Enter')addSubValue('brand');};
   $('presetCats').onclick=e=>{
+    const ed=e.target.closest('[data-editcat]');
+    if(ed){e.stopPropagation();renameCategory(ed.dataset.editcat);return;}
     const del=e.target.closest('[data-delcat]');
     if(del){e.stopPropagation();delCategory(del.dataset.delcat);return;}
     const item=e.target.closest('[data-cat]');
     if(item){presetSel=item.dataset.cat;renderPresetMgr();}
   };
-  $('presetKinds').onclick=e=>{const d=e.target.closest('[data-delval]');if(d){e.stopPropagation();delSubValue(d.dataset.deltype,d.dataset.delval);}};
-  $('presetBrands').onclick=e=>{const d=e.target.closest('[data-delval]');if(d){e.stopPropagation();delSubValue(d.dataset.deltype,d.dataset.delval);}};
+  const subClick=e=>{
+    const ed=e.target.closest('[data-edit]');
+    if(ed){e.stopPropagation();renameSubValue(ed.dataset.edit,ed.dataset.val);return;}
+    const del=e.target.closest('[data-del]');
+    if(del){e.stopPropagation();delSubValue(del.dataset.del,del.dataset.val);}
+  };
+  $('presetKinds').onclick=subClick;
+  $('presetBrands').onclick=subClick;
   let reg=false;
   $('auToggle').onclick=()=>{reg=!reg;$('auToggle').textContent=reg?' 登录':' 注册一个';$('auSubmit').textContent=reg?'注册并登录':'登录';};
   $('auSubmit').onclick=async()=>{
