@@ -226,7 +226,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v19</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v20</div>
   </div>
 </div>
 
@@ -501,6 +501,26 @@ function categoryList(){return Object.keys(presets||{}).sort(sortZh);}
 function kindsOf(c){return (presets[c]&&presets[c].kinds)||[];}
 function brandsOf(c){return (presets[c]&&presets[c].brands)||[];}
 function allBrands(){const s=new Set();categoryList().forEach(c=>brandsOf(c).forEach(b=>s.add(b)));return [...s].sort(sortZh);}
+// 主页品牌筛选:按当前所用品类级联。取"该品类预设品牌 ∪ 该品类实际物品品牌"并集,
+// 避免预设库降级/旧数据不全时漏掉已录入的品牌;未选品类则显示全部。
+function filterBrands(){
+  const c=($('fCategory').value||'').trim();
+  const s=new Set();
+  if(c){
+    brandsOf(c).forEach(b=>s.add(b));
+    items.forEach(i=>{if(i.category===c&&i.brand)s.add(i.brand);});
+  }else{
+    allBrands().forEach(b=>s.add(b));
+    items.forEach(i=>{if(i.brand)s.add(i.brand);});
+  }
+  return [...s].filter(Boolean).sort(sortZh);
+}
+// 重填品牌下拉;若当前选中品牌不在新列表(换品类后),重置为"全部品牌"
+function fillFilterBrands(){
+  const sel=$('fBrand'), cur=sel.value, arr=filterBrands();
+  sel.innerHTML=`<option value="">全部品牌</option>`+arr.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+  sel.value=arr.includes(cur)?cur:'';
+}
 // 级联:种类/品牌只取当前所选品类下的值;未选品类则无选项
 function optsForCombo(k){
   const cat=($('edCategory').value||'').trim();
@@ -574,7 +594,7 @@ function buildOptions(){
     $(sel).value=cur;
   };
   fill('fCategory',categoryList(),'全部品类');
-  fill('fBrand',allBrands(),'全部品牌');
+  fillFilterBrands();
   ['category','kind','brand'].forEach(k=>renderCombo(k,''));
 }
 function filtered(){
@@ -882,7 +902,9 @@ function bind(){
     const ed=e.target.closest('[data-edit]');if(ed){const it=items.find(x=>x.id===ed.dataset.edit);if(it)openEditor(it);return;}
     const card=e.target.closest('.card');if(card){const it=items.find(x=>x.id===card.dataset.id);if(it)openEditor(it);}
   };
-  ['fSearch','fCategory','fBrand','fSort'].forEach(id=>$(id).addEventListener('input',render));
+  // 品类切换:先按新品类级联重填品牌下拉(旧品牌若不属于新品类会被重置),再筛选
+  $('fCategory').addEventListener('change',()=>{fillFilterBrands();render();});
+  ['fSearch','fBrand','fSort'].forEach(id=>$(id).addEventListener('input',render));
 }
 
 /* ============ 启动 ============ */
