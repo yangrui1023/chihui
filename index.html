@@ -173,18 +173,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 </head>
 <body>
 
-<!-- ① 连接中/失败提示(连接配置已内置,无需也无法手动填写) -->
-<div class="screen center active" id="setup">
-  <div class="panel">
-    <div class="logo">吃<em>灰</em></div>
-    <div class="desc" id="setupMsg">正在连接云端…</div>
-    <div class="tip" id="setupTip" style="display:none">连接失败,请检查手机网络后重新打开本页。若持续失败,可能是 Supabase 免费项目休眠中,稍等约 30 秒再试。</div>
-    <button class="btn primary block" id="setupRetry" style="display:none">重试连接</button>
-  </div>
-</div>
-
-<!-- ② 登录 -->
-<div class="screen center" id="auth">
+<!-- ① 登录(默认显示,不依赖任何网络连接) -->
+<div class="screen center active" id="auth">
   <div class="panel">
     <div class="logo">吃<em>灰</em></div>
     <div class="desc">登录你的吃灰清单</div>
@@ -192,8 +182,8 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <div class="field"><label>密码</label><input id="auPass" type="password" placeholder="至少 6 位" autocomplete="current-password"></div>
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
-    <div id="cloudStatus" style="margin-top:14px;font-size:11px;text-align:center;color:#999">☁️ 正在连接云端…</div>
-    <div style="margin-top:6px;font-size:11px;color:#bbb;text-align:center">v3 · 已内置连接配置</div>
+    <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v4</div>
   </div>
 </div>
 
@@ -301,20 +291,9 @@ function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.re
 
 /* ============ 初始化 ============ */
 function getCfg(){return {url:localStorage.getItem(CFG_URL)||DEFAULT_URL,key:localStorage.getItem(CFG_KEY)||DEFAULT_KEY};}
-// 在登录页显示云端连接状态小字(纯 fetch 自检,不阻塞界面)
-function checkCloudStatus(){
-  const el=$('cloudStatus');if(!el)return;
-  el.textContent='☁️ 正在连接云端…';el.style.color='#999';
-  const ctrl=new AbortController();
-  const timer=setTimeout(()=>ctrl.abort(),15000);
-  fetch(DEFAULT_URL+'/auth/v1/settings',{headers:{apikey:DEFAULT_KEY},signal:ctrl.signal})
-    .then(r=>{clearTimeout(timer);if(r.ok){el.textContent='☁️ 云端已连接';el.style.color='#2a9d5b';}else{el.textContent='☁️ 云端响应异常('+r.status+')';el.style.color='#d08c2a';}})
-    .catch(()=>{clearTimeout(timer);el.textContent='⚠️ 云端连接慢或不可用,可稍后重试';el.style.color='#d08c2a';});
-}
 function initClient(){
-  // 关键:立即显示登录页,不等任何网络请求。getSession 放后台,连上且有账号才自动进主界面。
+  // 登录页是静态默认屏,不依赖任何网络请求;云端连接放后台,连上且有账号才自动进主界面。
   show('auth');
-  checkCloudStatus();
   try{
     localStorage.removeItem(CFG_URL);localStorage.removeItem(CFG_KEY);
     client=supabase.createClient(DEFAULT_URL,DEFAULT_KEY,{
@@ -518,7 +497,6 @@ async function plusOne(id){
 
 /* ============ 事件绑定 ============ */
 function bind(){
-  $('setupRetry').onclick=()=>{location.reload();};
   let reg=false;
   $('auToggle').onclick=()=>{reg=!reg;$('auToggle').textContent=reg?' 登录':' 注册一个';$('auSubmit').textContent=reg?'注册并登录':'登录';};
   $('auSubmit').onclick=async()=>{
