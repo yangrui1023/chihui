@@ -183,7 +183,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v5</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v6 · <span id="forceEnter" style="color:#4a90d9;cursor:pointer;text-decoration:underline">进入主界面</span></div>
   </div>
 </div>
 
@@ -288,12 +288,14 @@ function costOf(it){
   return it.price/daysSince(it.purchase_date);
 }
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');}
-// 进入主界面(统一入口:登录/注册成功后直接调用,不依赖 onAuthStateChange 回调)
+// 进入主界面(统一入口:无论如何先切界面,数据加载失败也不影响显示)
 function enterApp(u){
-  if(!u)return;
-  show('app');
-  $('whoEmail').textContent=u.email||'';
-  loadItems();
+  show('app'); // 第一步无条件切换界面
+  try{
+    const email=(u&&u.email)||$('auEmail').value.trim()||'';
+    $('whoEmail').textContent=email;
+  }catch(e){}
+  try{loadItems();}catch(e){toast('清单加载失败:'+(e.message||'请下拉刷新'));}
 }
 
 /* ============ 初始化 ============ */
@@ -504,6 +506,7 @@ async function plusOne(id){
 
 /* ============ 事件绑定 ============ */
 function bind(){
+  $('forceEnter').onclick=()=>enterApp(null);
   let reg=false;
   $('auToggle').onclick=()=>{reg=!reg;$('auToggle').textContent=reg?' 登录':' 注册一个';$('auSubmit').textContent=reg?'注册并登录':'登录';};
   $('auSubmit').onclick=async()=>{
@@ -511,20 +514,15 @@ function bind(){
     if(!email||!pass){toast('请填邮箱和密码');return;}
     const b=$('auSubmit');b.disabled=true;b.innerHTML='<span class="spin"></span> 请稍候';
     try{
+      let err;
       if(reg){
-        const {error}=await client.auth.signUp({email,password:pass});
-        if(error){toast(error.message);}
-        else{
-          // 注册成功:autoconfirm 开启会直接返回 session;否则用刚注册的账号登录一次
-          const {data,error:e2}=await client.auth.signInWithPassword({email,password:pass});
-          if(!e2&&data?.user){toast('注册成功');enterApp(data.user);}
-          else toast('注册成功,请手动登录');
-        }
+        ({error:err}=await client.auth.signUp({email,password:pass}));
+        if(!err){await client.auth.signInWithPassword({email,password:pass});toast('注册成功');enterApp({email});}
+        else toast(err.message);
       }else{
-        const {data,error}=await client.auth.signInWithPassword({email,password:pass});
-        if(error){toast(error.message);}
-        else if(data?.user){toast('欢迎回来');enterApp(data.user);}
-        else toast('登录失败,请重试');
+        ({error:err}=await client.auth.signInWithPassword({email,password:pass}));
+        if(!err){toast('欢迎回来');enterApp({email});}
+        else toast(err.message);
       }
     }catch(e){toast('操作失败:'+(e.message||'请检查网络'));}
     b.disabled=false;b.textContent=reg?'注册并登录':'登录';
