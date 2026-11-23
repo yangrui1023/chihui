@@ -173,15 +173,13 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 </head>
 <body>
 
-<!-- ① 连接设置 -->
-<div class="screen center" id="setup">
+<!-- ① 连接中/失败提示(连接配置已内置,无需也无法手动填写) -->
+<div class="screen center active" id="setup">
   <div class="panel">
     <div class="logo">吃<em>灰</em></div>
-    <div class="desc">哪件在吃灰 · 连接你的云端数据库</div>
-    <div class="tip">按部署文档创建 Supabase 项目后,把 <b>Project URL</b> 和 <b>Publishable key</b> 填在这里。只需填一次,之后自动记住。</div>
-    <div class="field"><label>Supabase URL</label><input id="cfgUrl" placeholder="https://xxxx.supabase.co" autocomplete="off"></div>
-    <div class="field"><label>Publishable key(公开密钥)</label><input id="cfgKey" placeholder="sb_publishable_..." autocomplete="off"></div>
-    <button class="btn primary block" id="cfgSave">连接并继续</button>
+    <div class="desc" id="setupMsg">正在连接云端…</div>
+    <div class="tip" id="setupTip" style="display:none">连接失败,请检查手机网络后重新打开本页。若持续失败,可能是 Supabase 免费项目休眠中,稍等约 30 秒再试。</div>
+    <button class="btn primary block" id="setupRetry" style="display:none">重试连接</button>
   </div>
 </div>
 
@@ -302,36 +300,31 @@ function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.re
 
 /* ============ 初始化 ============ */
 function getCfg(){return {url:localStorage.getItem(CFG_URL)||DEFAULT_URL,key:localStorage.getItem(CFG_KEY)||DEFAULT_KEY};}
+function showSetupError(){
+  show('setup');
+  const m=$('setupMsg'),t=$('setupTip'),b=$('setupRetry');
+  if(m)m.textContent='连接失败';
+  if(t)t.style.display='';
+  if(b)b.style.display='';
+}
 function initClient(){
-  const {url,key}=getCfg();
-  if(!url||!key){show('setup');return false;}
+  // 8 秒兜底:若 getSession 因网络问题一直不返回,显示明确的失败提示,不无限卡在"正在连接"
+  const guard=setTimeout(()=>{
+    const cur=[...document.querySelectorAll('.screen')].find(s=>s.classList.contains('active'))?.id;
+    if(cur==='setup')showSetupError();
+  },8000);
+  const enter=(u)=>{clearTimeout(guard);if(u){show('app');$('whoEmail').textContent=u.email;loadItems();}else show('auth');};
   try{
-    client=supabase.createClient(url,key,{
+    // 始终用内置配置,忽略 localStorage 里可能残留的旧值
+    localStorage.removeItem(CFG_URL);localStorage.removeItem(CFG_KEY);
+    client=supabase.createClient(DEFAULT_URL,DEFAULT_KEY,{
       auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
     });
-    client.auth.onAuthStateChange((_e,session)=>{
-      user=session?.user||null;
-      if(user){show('app');$('whoEmail').textContent=user.email;loadItems();}
-      else{show('auth');}
-    });
-    client.auth.getSession().then(({data})=>{
-      user=data.session?.user||null;
-      if(user){show('app');$('whoEmail').textContent=user.email;loadItems();}
-      else{show('auth');}
-    });
+    client.auth.onAuthStateChange((_e,session)=>{enter(session?.user||null);});
+    client.auth.getSession().then(({data})=>{enter(data.session?.user||null);}).catch(()=>{clearTimeout(guard);showSetupError();});
     return true;
   }catch(e){
-    // 若是因为 localStorage 里有旧配置出错,清掉后用内置配置重试一次
-    if(localStorage.getItem(CFG_URL)||localStorage.getItem(CFG_KEY)){
-      localStorage.removeItem(CFG_URL);localStorage.removeItem(CFG_KEY);
-      try{
-        client=supabase.createClient(DEFAULT_URL,DEFAULT_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-        client.auth.onAuthStateChange((_e,session)=>{user=session?.user||null;if(user){show('app');$('whoEmail').textContent=user.email;loadItems();}else show('auth');});
-        client.auth.getSession().then(({data})=>{user=data.session?.user||null;if(user){show('app');$('whoEmail').textContent=user.email;loadItems();}else show('auth');});
-        return true;
-      }catch(e2){}
-    }
-    show('setup');toast('连接失败,请检查网络');return false;
+    clearTimeout(guard);showSetupError();return false;
   }
 }
 
@@ -519,23 +512,7 @@ async function plusOne(id){
 
 /* ============ 事件绑定 ============ */
 function bind(){
-  $('cfgSave').onclick=()=>{
-    // 支持整行粘贴(如 NEXT_PUBLIC_SUPABASE_URL=https://...),自动取 = 后的值
-    const clean=v=>{let s=(v||'').trim();const i=s.indexOf('=');if(i>-1)s=s.slice(i+1).trim();return s.replace(/^["']|["']$/g,'');};
-    const u=clean($('cfgUrl').value).replace(/\/$/,''), k=clean($('cfgKey').value);
-    if(!u||!k){toast('请填写 URL 和密钥');return;}
-    if(!/^https?:\/\//.test(u)){toast('URL 要以 https:// 开头');return;}
-    try{
-      localStorage.setItem(CFG_URL,u);localStorage.setItem(CFG_KEY,k);
-      client=supabase.createClient(u,k,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-      client.auth.onAuthStateChange((_e,session)=>{
-        user=session?.user||null;
-        if(user){show('app');$('whoEmail').textContent=user.email;loadItems();}
-        else show('auth');
-      });
-      show('auth');
-    }catch(e){toast('连接失败:'+(e.message||'请检查网址和密钥'));}
-  };
+  $('setupRetry').onclick=()=>{location.reload();};
   let reg=false;
   $('auToggle').onclick=()=>{reg=!reg;$('auToggle').textContent=reg?' 登录':' 注册一个';$('auSubmit').textContent=reg?'注册并登录':'登录';};
   $('auSubmit').onclick=async()=>{
