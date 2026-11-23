@@ -94,32 +94,42 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   .searchbox input{padding-left:36px}
   .searchbox .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:15px}
 
-  /* 卡片列表 */
+  /* 卡片列表 — 左右分栏 */
   .list{display:grid;grid-template-columns:1fr;gap:12px}
-  @media(min-width:560px){.list{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:640px){.list{grid-template-columns:repeat(2,1fr)}}
   .card{
-    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    padding:14px;box-shadow:var(--shadow);display:flex;gap:12px;position:relative;transition:transform .1s;
+    background:#f2f3f9;border:1px solid #eaebf3;border-radius:20px;
+    padding:16px 14px;display:flex;gap:12px;position:relative;transition:transform .1s;
   }
-  .card:active{transform:scale(.99)}
+  .card:active{transform:scale(.993)}
   .thumb{
-    width:66px;height:66px;border-radius:12px;flex:none;background:var(--accent-soft);
-    display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:26px;color:var(--accent);
+    width:74px;height:74px;border-radius:14px;flex:none;background:#fff;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:32px;color:var(--accent);
   }
-  .thumb img{width:100%;height:100%;object-fit:cover}
-  .info{flex:1;min-width:0}
-  .info .name{font-weight:650;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:22px}
-  .info .row{display:flex;align-items:center;gap:8px;margin-top:1px}
-  .info .meta{flex:1;min-width:0;font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .info .cost{flex:none;font-size:21px;font-weight:750;color:var(--accent);letter-spacing:-.4px;white-space:nowrap}
-  .info .cost small{font-size:12px;font-weight:500;color:var(--sub);margin-left:4px}
-  .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:6px;background:#f2f2ef;color:var(--sub);margin-right:4px}
-  .edit{position:absolute;top:12px;right:12px;color:var(--sub);font-size:14px;cursor:pointer;padding:2px 6px}
+  .thumb img{width:100%;height:100%;object-fit:contain}
+  .info{flex:1;min-width:0;position:relative;display:flex;flex-direction:column}
+  .info .name{font-weight:750;font-size:17px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:20px}
+  .info .meta{font-size:13px;color:#8e90a0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:6px}
+  .info .tags{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:10px}
+  .pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;padding:4px 11px;border-radius:9px;white-space:nowrap}
+  .pill.status{cursor:pointer}
+  .pill.status:active{transform:scale(.95)}
+  .pill.status.on{background:#dcf1e6;color:#2e9e6b}
+  .pill.status.off{background:#e9eaef;color:#8e90a0}
+  .pill.price{background:#e7e9f1;color:#6f7182}
+  .costbox{
+    flex:none;width:104px;border-left:1px solid #dfe1ec;padding-left:14px;
+    display:flex;flex-direction:column;align-items:flex-end;justify-content:center;text-align:right;
+  }
+  .costbox .cl{font-size:12px;color:#9a9cab}
+  .costbox .cv{font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--ink);margin-top:2px;white-space:nowrap}
+  .costbox .cv small{font-size:12px;font-weight:500;color:#9a9cab;margin-left:1px}
+  .edit{position:absolute;top:0;right:0;color:#b0b2c0;font-size:13px;cursor:pointer;padding:2px 4px}
   .plusone{
-    margin-top:8px;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
-    color:var(--ok);background:#eaf7f0;border:1px solid #cdebd9;border-radius:9px;padding:5px 10px;cursor:pointer;
+    margin-top:9px;display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:700;
+    color:#4a86e8;background:#e4eeff;border-radius:9px;padding:5px 12px;cursor:pointer;
   }
-  .plusone:active{transform:scale(.96)}
+  .plusone:active{transform:scale(.95)}
 
   /* 悬浮按钮 */
   .fab{
@@ -211,7 +221,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v14</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v15</div>
   </div>
 </div>
 
@@ -275,6 +285,13 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       </div>
     </div>
     <div class="field">
+      <label>使用状态</label>
+      <div class="seg" id="edStatus">
+        <button type="button" data-s="using" class="on">使用中</button>
+        <button type="button" data-s="idle">吃灰中</button>
+      </div>
+    </div>
+    <div class="field">
       <label>图片</label>
       <div class="upload" id="edUpload">
         <div id="edUploadInner">点击上传照片(自动压缩)</div>
@@ -333,7 +350,7 @@ const CFG_URL='kf_supa_url', CFG_KEY='kf_supa_key';
 /* 内置连接配置:任何设备打开都无需手填。publishable key 本就是公开的网页密钥,数据安全由数据库 RLS 保障。 */
 const DEFAULT_URL='https://pfgrpimkpezwyobkhznp.supabase.co';
 const DEFAULT_KEY='sb_publishable_swhdTkSOLFLdMplAlkx1zg_b31-f0v1';
-let client=null, user=null, items=[], editingId=null, billing='time';
+let client=null, user=null, items=[], editingId=null, billing='time', formStatus='using';
 let newImageData=null, oldImagePath=null, imagePathChanged=false;
 const $=id=>document.getElementById(id);
 
@@ -372,6 +389,7 @@ async function enterApp(u){
   }
   try{loadPresets();}catch(e){}
   try{loadItems();}catch(e){toast('清单加载失败:'+(e.message||'请下拉刷新'));}
+  try{detectStatusCol();}catch(e){}
 }
 
 /* ============ 初始化 ============ */
@@ -399,11 +417,36 @@ function initClient(){
 }
 
 /* ============ 数据读取 ============ */
+// 状态兼容:数据库有 status 列则用云端值;没有则从本地缓存补,默认使用中
+let statusColOk=null; // null=未知 true=有列 false=无列
+function localStatus(){try{return JSON.parse(localStorage.getItem('chihui_status')||'{}');}catch(e){return {};}}
+function mergeStatus(list){
+  const lc=localStatus();
+  list.forEach(i=>{if(i.status!=='using'&&i.status!=='idle'){i.status=lc[i.id]||'using';}});
+}
+async function detectStatusCol(){
+  const {error}=await client.from('items').select('status').limit(1);
+  statusColOk=!error;
+}
 async function loadItems(){
   const {data,error}=await client.from('items').select('*').order('created_at',{ascending:false});
   if(error){toast('读取失败:'+error.message);return;}
   items=data||[];
+  mergeStatus(items);
   buildOptions();render();
+}
+// 切换使用状态:有列写云端+本地,无列只写本地
+async function toggleStatus(id){
+  const it=items.find(x=>x.id===id);if(!it)return;
+  it.status=it.status==='using'?'idle':'using';
+  render();
+  if(statusColOk===null)await detectStatusCol();
+  const lc=localStatus();lc[id]=it.status;
+  try{localStorage.setItem('chihui_status',JSON.stringify(lc));}catch(e){}
+  if(statusColOk){
+    const {error}=await client.from('items').update({status:it.status}).eq('id',id);
+    if(error){toast('状态同步失败:'+error.message);statusColOk=null;}
+  }
 }
 /* ============ 层级预设库 ============
    结构:{品类:{kinds:[种类...],brands:[品牌...]}}
@@ -564,19 +607,27 @@ function render(){
     const cost=costOf(it);
     const emoji=EMOJI[it.category]||'📦';
     const thumb=it.image_url?`<img src="${esc(it.image_url)}" alt="">`:emoji;
-    const sub=isCount?`已使用${it.use_count||0}次`:`已用 ${daysSince(it.purchase_date)} 天`;
-    const meta=[it.brand,it.kind,sub,it.color].filter(Boolean).map(esc).join(' · ');
+    const sub=isCount?`已用 ${it.use_count||0} 次`:`已用 ${daysSince(it.purchase_date)} 天`;
+    const meta=[it.category||'未分类',it.kind,sub].filter(Boolean).map(esc).join(' · ');
+    const using=it.status!=='idle';
+    const costLabel=isCount?'单次成本':'日均成本';
+    const unit=isCount?'/次':'/天';
     return `<div class="card" data-id="${it.id}">
       <div class="thumb">${thumb}</div>
       <div class="info">
         <div class="name">${esc(it.name)}</div>
-        <div class="row">
-          <div class="meta"><span class="tag">${esc(it.category||'未分类')}</span>${meta}</div>
-          <div class="cost">${money(cost)}<small>${isCount?'每次':'每天'}</small></div>
+        <div class="meta">${meta}</div>
+        <div class="tags">
+          <span class="pill status ${using?'on':'off'}" data-status="${it.id}">${using?'使用中':'吃灰中'}</span>
+          <span class="pill price">${money(it.price)}</span>
         </div>
-        ${isCount?`<div class="plusone" data-plus="${it.id}">＋ 记一次</div>`:''}
+        <div class="edit" data-edit="${it.id}">✎</div>
       </div>
-      <div class="edit" data-edit="${it.id}">✎</div>
+      <div class="costbox">
+        <div class="cl">${costLabel}</div>
+        <div class="cv">${money(cost)}<small>${unit}</small></div>
+        ${isCount?`<div class="plusone" data-plus="${it.id}">+1 次</div>`:''}
+      </div>
     </div>`;
   }).join('');
 }
@@ -586,6 +637,10 @@ function setBilling(b){
   billing=b;
   document.querySelectorAll('#edBilling button').forEach(x=>x.classList.toggle('on',x.dataset.b===b));
   $('countField').style.display=b==='count'?'block':'none';
+}
+function setFormStatus(s){
+  formStatus=s==='idle'?'idle':'using';
+  document.querySelectorAll('#edStatus button').forEach(x=>x.classList.toggle('on',x.dataset.s===formStatus));
 }
 function openEditor(it){
   editingId=it?.id||null;
@@ -602,6 +657,7 @@ function openEditor(it){
   $('edCount').value=it?.use_count??0;
   $('edNote').value=it?.note||'';
   setBilling(it?.billing||'time');
+  setFormStatus(it?.status||'using');
   const img=it?.image_url||'';
   $('edUploadInner').innerHTML=img?`<img src="${esc(img)}">点击更换照片`:'点击上传照片(自动压缩)';
   $('edRemoveImg').style.display=img?'block':'none';
@@ -664,6 +720,7 @@ async function saveItem(){
       const {data}=client.storage.from('item-images').getPublicUrl(oldImagePath);
       image_url=data.publicUrl;
     }
+    // 有 status 列时把使用状态写进 payload;无列时不写,避免 insert 报错(状态走本地缓存)
     const payload={
       user_id:user.id, category,kind,brand,name,price,
       purchase_date:$('edDate').value||new Date().toISOString().slice(0,10),
@@ -672,10 +729,16 @@ async function saveItem(){
       billing, use_count:billing==='count'?(parseInt($('edCount').value)||0):0,
       image_url, image_path
     };
-    let error;
+    if(statusColOk)payload.status=formStatus;
+    let error, savedId=editingId;
     if(editingId){({error}=await client.from('items').update(payload).eq('id',editingId));}
-    else{({error}=await client.from('items').insert(payload));}
+    else{
+      const r=await client.from('items').insert(payload).select('id');
+      error=r.error;if(!error&&r.data&&r.data[0])savedId=r.data[0].id;
+    }
     if(error)throw error;
+    // 状态始终写本地缓存(有列时云端也有,双保险)
+    if(savedId){const lc=localStatus();lc[savedId]=formStatus;try{localStorage.setItem('chihui_status',JSON.stringify(lc));}catch(e){}}
     if(imagePathChanged&&oldImagePath&&oldImagePath!==image_path)await removeImage(oldImagePath);
     // 新录入的分类值自动纳入预设库(该品类下)——失败不能阻断物品已保存的结果
     try{
@@ -789,6 +852,7 @@ function bind(){
   $('edClose').onclick=closeEditor;
   $('editOverlay').onclick=e=>{if(e.target===$('editOverlay'))closeEditor();};
   document.querySelectorAll('#edBilling button').forEach(b=>b.onclick=()=>setBilling(b.dataset.b));
+  document.querySelectorAll('#edStatus button').forEach(b=>b.onclick=()=>setFormStatus(b.dataset.s));
   $('edSave').onclick=saveItem;
   $('edDelete').onclick=deleteItem;
   $('edUpload').onclick=()=>$('edFile').click();
@@ -807,6 +871,7 @@ function bind(){
   };
   $('list').onclick=e=>{
     const plus=e.target.closest('[data-plus]');if(plus){plusOne(plus.dataset.plus);return;}
+    const st=e.target.closest('[data-status]');if(st){toggleStatus(st.dataset.status);return;}
     const ed=e.target.closest('[data-edit]');if(ed){const it=items.find(x=>x.id===ed.dataset.edit);if(it)openEditor(it);return;}
     const card=e.target.closest('.card');if(card){const it=items.find(x=>x.id===card.dataset.id);if(it)openEditor(it);}
   };
