@@ -183,7 +183,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v6 · <span id="forceEnter" style="color:#4a90d9;cursor:pointer;text-decoration:underline">进入主界面</span></div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v7 · <span id="forceEnter" style="color:#4a90d9;cursor:pointer;text-decoration:underline">进入主界面</span></div>
   </div>
 </div>
 
@@ -287,13 +287,26 @@ function costOf(it){
   if(it.billing==='count'){const n=Math.max(1,it.use_count||0);return it.price/n;}
   return it.price/daysSince(it.purchase_date);
 }
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');}
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='none';});
+  const el=$(id);
+  if(el){el.classList.add('active');el.style.display='block';}
+  window.__currentScreen=id; // 供自检
+}
 // 进入主界面(统一入口:无论如何先切界面,数据加载失败也不影响显示)
 function enterApp(u){
+  window.__enterAppCalled=true;
   show('app'); // 第一步无条件切换界面
   try{
     const email=(u&&u.email)||$('auEmail').value.trim()||'';
     $('whoEmail').textContent=email;
+  }catch(e){}
+  // 自证横幅:只要 enterApp 真的执行,这行红字一定出现(3 秒后自动消失)
+  try{
+    const b=document.createElement('div');
+    b.textContent='✅ 已进入主界面 v7';
+    b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#d32f2f;color:#fff;font-size:18px;font-weight:700;text-align:center;padding:14px;';
+    document.body.appendChild(b);setTimeout(()=>b.remove(),3000);
   }catch(e){}
   try{loadItems();}catch(e){toast('清单加载失败:'+(e.message||'请下拉刷新'));}
 }
