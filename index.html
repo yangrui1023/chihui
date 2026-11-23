@@ -226,7 +226,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v20</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v21</div>
   </div>
 </div>
 
@@ -463,10 +463,21 @@ const DEFAULT_PRESETS={
   '家居':{kinds:['床品','厨具','收纳','灯具'],brands:['宜家','无印良品']},
   '美妆':{kinds:['护肤','彩妆','香水'],brands:['兰蔻','雅诗兰黛','完美日记']}
 };
-// 无图时按品类显示的默认 emoji(可识别的品类用专属图标,其余回退📦)
+// 无图时的默认 emoji:一个种类一个图标(偏女性化),优先按 kind 取,kind 未收录则回退品类,再回退📦
 const EMOJI={
-  '服饰':'👕','鞋包':'👜','数码':'📱','家居':'🛋️','美妆':'💄',
-  '图书':'📚','运动':'🏃','配饰':'⌚','母婴':'🍼','食品':'🍫','其他':'📦'
+  // 服饰
+  'T恤':'👚','衬衫':'👚','上衣':'👚','外套':'🧥','裤子':'👖','裙子':'👗',
+  '卫衣':'🧥','毛衣':'🧶','西装':'👔','首饰':'💎',
+  // 鞋包
+  '运动鞋':'👟','皮鞋':'👠','靴子':'👢','单肩包':'👜','双肩包':'🎒','鞋子':'👠','包包':'👜',
+  // 数码
+  '手机':'📱','耳机':'🎧','电脑':'💻','平板':'📱','相机':'📷',
+  // 家居 / 美妆
+  '床品':'🛏️','厨具':'🍳','收纳':'🧺','灯具':'💡',
+  '护肤':'🧴','彩妆':'💄','香水':'🌸',
+  // 品类回退(kind 未收录时)
+  '服饰':'👗','鞋包':'👜','数码':'📱','家居':'🛋️','美妆':'💄',
+  '图书':'📚','运动':'🏃','配饰':'💍','母婴':'🍼','食品':'🍫','其他':'📦'
 };
 let presets=null;
 const sortZh=(a,b)=>String(a).localeCompare(String(b),'zh');
@@ -630,7 +641,7 @@ function render(){
   L.innerHTML=arr.map(it=>{
     const isCount=it.billing==='count';
     const cost=costOf(it);
-    const emoji=EMOJI[it.category]||'📦';
+    const emoji=EMOJI[it.kind]||EMOJI[it.category]||'📦';
     const thumb=it.image_url?`<img src="${esc(it.image_url)}" alt="">`:emoji;
     const sub=isCount?`已用 ${it.use_count||0} 次`:`已用 ${daysSince(it.purchase_date)} 天`;
     const meta=[it.category||'未分类',it.kind,sub].filter(Boolean).map(esc).join(' · ');
