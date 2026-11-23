@@ -118,12 +118,12 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   .pill.status.off{background:#e9eaef;color:#8e90a0}
   .pill.price{background:#e7e9f1;color:#6f7182}
   .costbox{
-    flex:none;width:104px;border-left:1px solid #dfe1ec;padding-left:14px;
+    flex:0 0 auto;max-width:46%;border-left:1px solid #dfe1ec;padding-left:12px;
     display:flex;flex-direction:column;align-items:flex-end;justify-content:center;text-align:right;
   }
   .costbox .cl{font-size:12px;color:#9a9cab}
-  .costbox .cv{font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--ink);margin-top:2px;white-space:nowrap}
-  .costbox .cv small{font-size:12px;font-weight:500;color:#9a9cab;margin-left:1px}
+  .costbox .cv{font-size:18px;font-weight:800;letter-spacing:-.3px;color:var(--ink);margin-top:2px;white-space:nowrap}
+  .costbox .cv small{font-size:11px;font-weight:500;color:#9a9cab;margin-left:2px}
   .edit{position:absolute;top:0;right:0;color:#b0b2c0;font-size:13px;cursor:pointer;padding:2px 4px}
   .plusone{
     margin-top:9px;display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:700;
@@ -221,7 +221,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v15</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v16</div>
   </div>
 </div>
 
@@ -612,6 +612,8 @@ function render(){
     const using=it.status!=='idle';
     const costLabel=isCount?'单次成本':'日均成本';
     const unit=isCount?'/次':'/天';
+    const amt=money(cost);
+    const amtFs=amt.length>=11?14:amt.length>=9?16:18;
     return `<div class="card" data-id="${it.id}">
       <div class="thumb">${thumb}</div>
       <div class="info">
@@ -625,7 +627,7 @@ function render(){
       </div>
       <div class="costbox">
         <div class="cl">${costLabel}</div>
-        <div class="cv">${money(cost)}<small>${unit}</small></div>
+        <div class="cv" style="font-size:${amtFs}px">${amt}<small>${unit}</small></div>
         ${isCount?`<div class="plusone" data-plus="${it.id}">+1 次</div>`:''}
       </div>
     </div>`;
