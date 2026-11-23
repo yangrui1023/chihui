@@ -191,7 +191,6 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <div class="field"><label>密码</label><input id="auPass" type="password" placeholder="至少 6 位" autocomplete="current-password"></div>
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
-    <div class="switch" style="margin-top:14px"><span class="link" id="auReconfig">重新配置连接</span></div>
   </div>
 </div>
 
@@ -275,6 +274,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 <script>
 /* ============ 基础状态 ============ */
 const CFG_URL='kf_supa_url', CFG_KEY='kf_supa_key';
+/* 内置连接配置:任何设备打开都无需手填。publishable key 本就是公开的网页密钥,数据安全由数据库 RLS 保障。 */
+const DEFAULT_URL='https://pfgrpimkpezwyobkhznp.supabase.co';
+const DEFAULT_KEY='sb_publishable_swhdTkSOLFLdMplAlkx1zg_b31-f0v1';
 let client=null, user=null, items=[], editingId=null, billing='time';
 let newImageData=null, oldImagePath=null, imagePathChanged=false;
 const $=id=>document.getElementById(id);
@@ -295,7 +297,7 @@ function costOf(it){
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');}
 
 /* ============ 初始化 ============ */
-function getCfg(){return {url:localStorage.getItem(CFG_URL),key:localStorage.getItem(CFG_KEY)};}
+function getCfg(){return {url:localStorage.getItem(CFG_URL)||DEFAULT_URL,key:localStorage.getItem(CFG_KEY)||DEFAULT_KEY};}
 function initClient(){
   const {url,key}=getCfg();
   if(!url||!key){show('setup');return false;}
@@ -314,7 +316,19 @@ function initClient(){
       else{show('auth');}
     });
     return true;
-  }catch(e){localStorage.removeItem(CFG_URL);localStorage.removeItem(CFG_KEY);show('setup');toast('配置已失效,请重新填写');return false;}
+  }catch(e){
+    // 若是因为 localStorage 里有旧配置出错,清掉后用内置配置重试一次
+    if(localStorage.getItem(CFG_URL)||localStorage.getItem(CFG_KEY)){
+      localStorage.removeItem(CFG_URL);localStorage.removeItem(CFG_KEY);
+      try{
+        client=supabase.createClient(DEFAULT_URL,DEFAULT_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+        client.auth.onAuthStateChange((_e,session)=>{user=session?.user||null;if(user){show('app');$('whoEmail').textContent=user.email;loadItems();}else show('auth');});
+        client.auth.getSession().then(({data})=>{user=data.session?.user||null;if(user){show('app');$('whoEmail').textContent=user.email;loadItems();}else show('auth');});
+        return true;
+      }catch(e2){}
+    }
+    show('setup');toast('连接失败,请检查网络');return false;
+  }
 }
 
 /* ============ 数据读取 ============ */
@@ -530,7 +544,6 @@ function bind(){
     b.disabled=false;b.textContent=reg?'注册并登录':'登录';
     if(error)toast(error.message);
   };
-  $('auReconfig').onclick=()=>{localStorage.removeItem(CFG_URL);localStorage.removeItem(CFG_KEY);location.reload();};
   $('logout').onclick=async()=>{await client.auth.signOut();toast('已退出');};
 
   $('addBtn').onclick=()=>openEditor(null);
