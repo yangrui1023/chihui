@@ -183,7 +183,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v4</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v5</div>
   </div>
 </div>
 
@@ -288,6 +288,13 @@ function costOf(it){
   return it.price/daysSince(it.purchase_date);
 }
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');}
+// 进入主界面(统一入口:登录/注册成功后直接调用,不依赖 onAuthStateChange 回调)
+function enterApp(u){
+  if(!u)return;
+  show('app');
+  $('whoEmail').textContent=u.email||'';
+  loadItems();
+}
 
 /* ============ 初始化 ============ */
 function getCfg(){return {url:localStorage.getItem(CFG_URL)||DEFAULT_URL,key:localStorage.getItem(CFG_KEY)||DEFAULT_KEY};}
@@ -301,11 +308,11 @@ function initClient(){
     });
     client.auth.onAuthStateChange((_e,session)=>{
       const u=session?.user||null;
-      if(u){show('app');$('whoEmail').textContent=u.email;loadItems();}
+      if(u)enterApp(u);
     });
     client.auth.getSession().then(({data})=>{
       const u=data.session?.user||null;
-      if(u){show('app');$('whoEmail').textContent=u.email;loadItems();}
+      if(u)enterApp(u);
     }).catch(()=>{});
     return true;
   }catch(e){
@@ -503,11 +510,24 @@ function bind(){
     const email=$('auEmail').value.trim(),pass=$('auPass').value;
     if(!email||!pass){toast('请填邮箱和密码');return;}
     const b=$('auSubmit');b.disabled=true;b.innerHTML='<span class="spin"></span> 请稍候';
-    let error;
-    if(reg){({error}=await client.auth.signUp({email,password:pass}));if(!error)toast('注册成功,已登录');}
-    else{({error}=await client.auth.signInWithPassword({email,password:pass}));if(!error)toast('欢迎回来');}
+    try{
+      if(reg){
+        const {error}=await client.auth.signUp({email,password:pass});
+        if(error){toast(error.message);}
+        else{
+          // 注册成功:autoconfirm 开启会直接返回 session;否则用刚注册的账号登录一次
+          const {data,error:e2}=await client.auth.signInWithPassword({email,password:pass});
+          if(!e2&&data?.user){toast('注册成功');enterApp(data.user);}
+          else toast('注册成功,请手动登录');
+        }
+      }else{
+        const {data,error}=await client.auth.signInWithPassword({email,password:pass});
+        if(error){toast(error.message);}
+        else if(data?.user){toast('欢迎回来');enterApp(data.user);}
+        else toast('登录失败,请重试');
+      }
+    }catch(e){toast('操作失败:'+(e.message||'请检查网络'));}
     b.disabled=false;b.textContent=reg?'注册并登录':'登录';
-    if(error)toast(error.message);
   };
   $('logout').onclick=async()=>{await client.auth.signOut();toast('已退出');};
 
