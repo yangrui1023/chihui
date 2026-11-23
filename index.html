@@ -143,7 +143,17 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:translateY(0);opacity:1}}
   .sheet h2{margin:0 0 16px;font-size:18px;display:flex;align-items:center;justify-content:space-between}
   .sheet h2 .x{cursor:pointer;color:var(--sub);font-size:22px;line-height:1}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+  .grid2 input{min-width:0}
+  /* 预设下拉：输入可新增，箭头展开选项 */
+  .combo-input{position:relative}
+  .combo-input input{padding-right:38px}
+  .combo-arrow{position:absolute;right:0;top:0;width:38px;height:100%;display:flex;align-items:center;justify-content:center;color:var(--sub);cursor:pointer;user-select:none;font-size:15px}
+  .combo-list{display:none;position:absolute;z-index:60;left:0;right:0;top:calc(100% + 4px);max-height:220px;overflow-y:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 26px rgba(0,0,0,.14);padding:6px}
+  .combo-list.open{display:block}
+  .combo-list .opt{padding:9px 10px;border-radius:8px;cursor:pointer;font-size:14px}
+  .combo-list .opt:active,.combo-list .opt:hover{background:var(--accent-soft);color:var(--accent)}
+  .combo-list .none{padding:9px 10px;color:var(--sub);font-size:13px}
   .seg{display:flex;background:#eeeeea;border-radius:12px;padding:3px;gap:3px}
   .seg button{flex:1;padding:9px;border:none;background:transparent;border-radius:9px;cursor:pointer;font-weight:600;color:var(--sub)}
   .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.08)}
@@ -184,7 +194,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v9</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v10</div>
   </div>
 </div>
 
@@ -225,18 +235,16 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <h2><span id="edTitle">添加物品</span><span class="x" id="edClose">×</span></h2>
     <input type="hidden" id="edId">
     <div class="grid2">
-      <div class="field"><label>品类 <span class="req">*</span></label><input id="edCategory" list="dlCategory" placeholder="如 服饰"><datalist id="dlCategory"></datalist></div>
-      <div class="field"><label>种类 <span class="req">*</span></label><input id="edKind" list="dlKind" placeholder="如 外套"><datalist id="dlKind"></datalist></div>
+      <div class="field"><label>品类 <span class="req">*</span></label><div class="combo-input"><input id="edCategory" placeholder="选或输入" autocomplete="off"><span class="combo-arrow" data-combo="category">▾</span><div class="combo-list" id="listCategory"></div></div></div>
+      <div class="field"><label>种类 <span class="req">*</span></label><div class="combo-input"><input id="edKind" placeholder="选或输入" autocomplete="off"><span class="combo-arrow" data-combo="kind">▾</span><div class="combo-list" id="listKind"></div></div></div>
     </div>
     <div class="grid2">
-      <div class="field"><label>品牌 <span class="req">*</span></label><input id="edBrand" list="dlBrand" placeholder="如 优衣库"><datalist id="dlBrand"></datalist></div>
+      <div class="field"><label>品牌 <span class="req">*</span></label><div class="combo-input"><input id="edBrand" placeholder="选或输入" autocomplete="off"><span class="combo-arrow" data-combo="brand">▾</span><div class="combo-list" id="listBrand"></div></div></div>
       <div class="field"><label>价格 <span class="req">*</span></label><input id="edPrice" type="number" inputmode="decimal" step="0.01" placeholder="0.00"></div>
     </div>
     <div class="field"><label>名称 <span class="req">*</span></label><input id="edName" placeholder="给它起个名字"></div>
-    <div class="grid2">
-      <div class="field"><label>购买日期(不填默认今天)</label><input id="edDate" type="date"></div>
-      <div class="field"><label>颜色</label><input id="edColor" placeholder="如 黑色"></div>
-    </div>
+    <div class="field"><label>购买日期 <span style="font-weight:400;color:#bbb">(默认今天)</span></label><input id="edDate" type="date"></div>
+    <div class="field"><label>颜色</label><input id="edColor" placeholder="如 黑色"></div>
     <div class="field">
       <label>计费方式</label>
       <div class="seg" id="edBilling">
@@ -334,17 +342,33 @@ async function loadItems(){
   items=data||[];
   buildOptions();render();
 }
+// 内置预设(服饰类为主)+历史录入值,一起作为下拉选项;新值保存后自动进入历史
+const PRESETS={
+  category:['服饰','鞋包','配饰','数码','家居','美妆','运动户外'],
+  kind:['T恤','衬衫','外套','裤子','裙子','连衣裙','卫衣','毛衣','鞋','包'],
+  brand:['优衣库','ZARA','H&M','无印良品','Nike','adidas']
+};
+function allOpts(k){
+  return [...new Set([...(PRESETS[k]||[]),...items.map(i=>i[k]).filter(Boolean)])].sort((a,b)=>String(a).localeCompare(String(b),'zh'));
+}
+function renderCombo(k,filter){
+  const box=$('list'+k[0].toUpperCase()+k.slice(1));
+  const q=(filter||'').trim().toLowerCase();
+  const arr=allOpts(k).filter(v=>!q||String(v).toLowerCase().includes(q));
+  box.innerHTML=arr.length
+    ? arr.map(v=>`<div class="opt">${esc(v)}</div>`).join('')
+    : '<div class="none">无匹配项,可直接输入新增</div>';
+}
+function closeCombos(){document.querySelectorAll('.combo-list.open').forEach(x=>x.classList.remove('open'));}
 function buildOptions(){
-  const uniq=k=>[...new Set(items.map(i=>i[k]).filter(Boolean))].sort();
-  const fill=(dl,sel,arr,label)=>{
-    $(dl).innerHTML=arr.map(v=>`<option value="${esc(v)}">`).join('');
+  const fill=(sel,arr,label)=>{
     const cur=$(sel).value;
     $(sel).innerHTML=`<option value="">${label}</option>`+arr.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
     $(sel).value=cur;
   };
-  fill('dlCategory','fCategory',uniq('category'),'全部品类');
-  fill('dlBrand','fBrand',uniq('brand'),'全部品牌');
-  $('dlKind').innerHTML=uniq('kind').map(v=>`<option value="${esc(v)}">`).join('');
+  fill('fCategory',allOpts('category'),'全部品类');
+  fill('fBrand',allOpts('brand'),'全部品牌');
+  ['category','kind','brand'].forEach(k=>renderCombo(k,''));
 }
 function filtered(){
   const q=($('fSearch').value||'').trim().toLowerCase();
@@ -511,6 +535,18 @@ async function plusOne(id){
 
 /* ============ 事件绑定 ============ */
 function bind(){
+  // 预设下拉:箭头展开 / 输入即过滤 / 点选项填入 / 点外部关闭
+  ['category','kind','brand'].forEach(k=>{
+    const input=$('ed'+k[0].toUpperCase()+k.slice(1));
+    const box=$('list'+k[0].toUpperCase()+k.slice(1));
+    const arrow=document.querySelector('.combo-arrow[data-combo="'+k+'"]');
+    const toggle=()=>{const willOpen=!box.classList.contains('open');closeCombos();if(willOpen){renderCombo(k,input.value);box.classList.add('open');}};
+    if(arrow)arrow.onclick=e=>{e.stopPropagation();toggle();};
+    input.onfocus=()=>{renderCombo(k,input.value);box.classList.add('open');};
+    input.oninput=()=>{renderCombo(k,input.value);box.classList.add('open');};
+    box.onclick=e=>{const opt=e.target.closest('.opt');if(opt){input.value=opt.textContent.trim();box.classList.remove('open');}};
+  });
+  document.addEventListener('click',e=>{if(!e.target.closest('.combo-input'))closeCombos();});
   let reg=false;
   $('auToggle').onclick=()=>{reg=!reg;$('auToggle').textContent=reg?' 登录':' 注册一个';$('auSubmit').textContent=reg?'注册并登录':'登录';};
   $('auSubmit').onclick=async()=>{
