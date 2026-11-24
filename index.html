@@ -90,7 +90,6 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   .filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
   .filters .search{flex:1 1 100%}
   .filters select{flex:1;width:auto;min-width:0;padding:10px 12px}
-  .filters .sortdir{flex:0 0 auto;width:42px;padding:0;border:1px solid var(--line);background:var(--card);border-radius:12px;color:var(--accent);font-size:18px;font-weight:700;cursor:pointer}
   .searchbox{position:relative}
   .searchbox input{padding-left:36px}
   .searchbox .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:15px}
@@ -262,7 +261,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v25</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v26</div>
   </div>
 </div>
 
@@ -285,11 +284,13 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       <select id="fCategory"><option value="">全部品类</option></select>
       <select id="fBrand"><option value="">全部品牌</option></select>
       <select id="fSort">
-        <option value="date">购买时间</option>
-        <option value="cost">成本</option>
-        <option value="price">价格</option>
+        <option value="date-desc">最新购买</option>
+        <option value="date-asc">最早购买</option>
+        <option value="cost-desc">成本最高</option>
+        <option value="cost-asc">成本最低</option>
+        <option value="price-desc">价格最高</option>
+        <option value="price-asc">价格最低</option>
       </select>
-      <button class="sortdir" id="fSortDir" title="切换升序/降序">↓</button>
     </div>
 
     <div class="list" id="list"></div>
@@ -753,7 +754,6 @@ function buildOptions(){
   fillFilterBrands();
   ['category','kind','brand'].forEach(k=>renderCombo(k,''));
 }
-let sortDir=-1; // -1 降序(默认), 1 升序; 点同一排序项或方向按钮切换
 function filtered(){
   const q=($('fSearch').value||'').trim().toLowerCase();
   const c=$('fCategory').value, b=$('fBrand').value, sort=$('fSort').value;
@@ -763,13 +763,15 @@ function filtered(){
     if(q){const s=[i.name,i.brand,i.kind,i.category,i.color,i.note].join(' ').toLowerCase();if(!s.includes(q))return false;}
     return true;
   });
-  // 排序按 sortDir 决定方向:默认购买时间倒序(最近买的在前)
+  // 排序选项自带方向: 字段-方向 (date/cost/price + desc/asc)
+  const [field,dir]=sort.split('-');
+  const sign=dir==='asc'?1:-1;
   arr.sort((x,y)=>{
     let d=0;
-    if(sort==='cost')d=costOf(x)-costOf(y);
-    else if(sort==='price')d=(x.price||0)-(y.price||0);
+    if(field==='cost')d=costOf(x)-costOf(y);
+    else if(field==='price')d=(x.price||0)-(y.price||0);
     else d=(new Date(x.purchase_date||0))-(new Date(y.purchase_date||0)); // 购买时间
-    return d*sortDir;
+    return d*sign;
   });
   return arr;
 }
@@ -1075,21 +1077,12 @@ function bind(){
   // 品类切换:先按新品类级联重填品牌下拉(旧品牌若不属于新品类会被重置),再筛选
   $('fCategory').addEventListener('change',()=>{fillFilterBrands();render();});
   ['fSearch','fBrand'].forEach(id=>$(id).addEventListener('input',render));
-  // 排序:重复点击当前选中项切换正倒序
-  $('fSort').addEventListener('change',e=>{
-    const s=e.target.dataset.prev;
-    if(s===e.target.value){sortDir=-sortDir;}
-    e.target.dataset.prev=e.target.value;
-    updateSortDirBtn();render();
-  });
-  $('fSortDir').addEventListener('click',()=>{sortDir=-sortDir;updateSortDirBtn();render();});
+  // 排序选项自带方向,切换即重排;默认选中第一项「最新购买」
+  $('fSort').addEventListener('change',render);
 }
-function updateSortDirBtn(){const b=$('fSortDir');b.textContent=sortDir<0?'↓':'↑';b.title=sortDir<0?'降序(点此改升序)':'升序(点此改降序)';}
 
 /* ============ 启动 ============ */
 bind();
-// 排序默认:购买时间倒序;初始化方向按钮
-(function(){const s=$('fSort');s.value='date';s.dataset.prev='date';sortDir=-1;updateSortDirBtn();})();
 initClient();
 </script>
 </body>
