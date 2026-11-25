@@ -263,7 +263,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v28</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v29</div>
   </div>
 </div>
 
@@ -416,6 +416,12 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show')
 function money(n){return '¥'+(Math.round(n*100)/100).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function yearMonth(dateStr){if(!dateStr)return '';const m=String(dateStr).match(/^(\d{4})-(\d{2})/);return m?`${m[1]}年${+m[2]}月`:'';}
 function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+// 缩略图命名规则:原图 xxx.jpg -> xxx_thumb.jpg;同一函数同时处理存储路径与公开 URL
+function thumbPathOf(path){
+  if(!path)return path;
+  const s=String(path),m=s.match(/^(.*?)(\.[a-zA-Z0-9]+)(\?.*)?$/);
+  return m?m[1]+'_thumb'+m[2]+(m[3]||''):s+'_thumb';
+}
 function daysSince(dateStr){
   const d=new Date(dateStr+'T00:00:00');
   if(isNaN(d))return 1;
@@ -864,7 +870,8 @@ function render(){
     const isCount=it.billing==='count';
     const cost=costOf(it);
     const emoji=emojiOf(it.kind,it.category);
-    const thumb=it.image_url?`<img src="${esc(it.image_url)}" alt="">`:emoji;
+    // 卡片用缩略图(长边240px),加载失败(老图片无缩略图)自动回退原图;lazy 让屏外图片延迟加载
+    const thumb=it.image_url?`<img src="${esc(thumbPathOf(it.image_url))}" data-full="${esc(it.image_url)}" loading="lazy" decoding="async" alt="" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src=this.dataset.full;}">`:emoji;
     const sub=isCount?`已用 ${it.use_count||0} 次`:`已用 ${daysSince(it.purchase_date)} 天`;
     const ym=yearMonth(it.purchase_date);
     const meta=[it.category||'未分类',it.kind,ym,sub].filter(Boolean).map(esc).join(' · ');
@@ -942,7 +949,15 @@ function compressImage(file){
         else if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
         const cv=document.createElement('canvas');cv.width=w;cv.height=h;
         cv.getContext('2d').drawImage(img,0,0,w,h);
-        resolve(cv.toDataURL('image/jpeg',0.72));
+        const full=cv.toDataURL('image/jpeg',0.72);
+        // 缩略图:长边 240px 足够 64px 卡片框(含 2x/3x 屏),体积约为原图 1/5
+        const T=240;let tw=w,th=h;
+        if(tw>th&&tw>T){th=Math.round(th*T/tw);tw=T;}
+        else if(th>T){tw=Math.round(tw*T/th);th=T;}
+        const tc=document.createElement('canvas');tc.width=tw;tc.height=th;
+        tc.getContext('2d').drawImage(cv,0,0,tw,th);
+        const thumb=tc.toDataURL('image/jpeg',0.7);
+        resolve({full,thumb});
       };
       img.onerror=reject;img.src=e.target.result;
     };
@@ -952,16 +967,21 @@ function compressImage(file){
 async function dataUrlToBlob(dataUrl){
   const r=await fetch(dataUrl);return await r.blob();
 }
-async function uploadImage(dataUrl){
-  const blob=await dataUrlToBlob(dataUrl);
+async function uploadImage(data){
   const path=`${user.id}/${Date.now()}.jpg`;
-  const {error}=await client.storage.from('item-images').upload(path,blob,{contentType:'image/jpeg',upsert:false});
+  const thumbPath=thumbPathOf(path);
+  const fullBlob=await dataUrlToBlob(data.full);
+  const {error}=await client.storage.from('item-images').upload(path,fullBlob,{contentType:'image/jpeg',upsert:false});
   if(error)throw error;
-  const {data}=client.storage.from('item-images').getPublicUrl(path);
-  return {url:data.publicUrl,path};
+  // 缩略图上传失败不阻断原图保存(老图/异常时卡片会自动回退原图)
+  try{const thumbBlob=await dataUrlToBlob(data.thumb);await client.storage.from('item-images').upload(thumbPath,thumbBlob,{contentType:'image/jpeg',upsert:false});}catch(e){}
+  const {data:d}=client.storage.from('item-images').getPublicUrl(path);
+  return {url:d.publicUrl,path};
 }
 async function removeImage(path){
   if(!path)return;
+  // 原图与缩略图一起删;缩略图可能不存在(老图),删除失败不影响原图
+  try{await client.storage.from('item-images').remove([thumbPathOf(path)]);}catch(e){}
   await client.storage.from('item-images').remove([path]);
 }
 
@@ -1147,7 +1167,7 @@ function bind(){
     const f=e.target.files[0];if(!f)return;
     try{
       const d=await compressImage(f);newImageData=d;imagePathChanged=true;
-      $('edUploadInner').innerHTML=`<img src="${d}">点击更换照片`;
+      $('edUploadInner').innerHTML=`<img src="${d.full}">点击更换照片`;
       $('edRemoveImg').style.display='block';
     }catch(err){toast('图片处理失败');}
   };
