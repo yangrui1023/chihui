@@ -119,6 +119,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   .pill.status.on{background:#dcf1e6;color:#2e9e6b}
   .pill.status.off{background:#e9eaef;color:#8e90a0}
   .pill.price{background:#e7e9f1;color:#6f7182}
+  .pill.channel{background:#f0f1f4;color:#9a9cab}
   .costbox{
     flex:0 0 104px;width:104px;max-width:none;border-left:1px solid #dfe1ec;padding-left:9px;
     display:flex;flex-direction:column;align-items:flex-end;justify-content:center;text-align:right;overflow:hidden;
@@ -167,11 +168,12 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
   .sheet h2 .x{cursor:pointer;color:var(--sub);font-size:22px;line-height:1}
   .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
   .grid2 input{min-width:0}
-  /* 日期框清除 iOS 原生渲染,与品类/品牌 combo 框同宽同左对齐 */
-  .grid2 input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;width:100%;text-align:left;font-family:inherit;font-size:16px}
-  .grid2 input[type=date]::-webkit-date-and-time-value{text-align:left}
-  /* 两列 label 统一单行等高,避免"(默认今天)"换行把日期框顶歪 */
+  /* 日期框清除 iOS 原生渲染,与其他输入框同宽同左对齐(日期现独占一行) */
+  .sheet input[type=date]{-webkit-appearance:none;appearance:none;min-width:0;width:100%;text-align:left;font-family:inherit;font-size:16px}
+  .sheet input[type=date]::-webkit-date-and-time-value{text-align:left}
+  /* 两列 label 统一单行等高;日期独占行时单独保证不换行 */
   .grid2 .field label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .field.date-row>label{white-space:nowrap}
   /* 预设下拉：输入可新增，箭头展开选项 */
   .combo-input{position:relative}
   .combo-input input{padding-right:38px}
@@ -261,7 +263,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     <button class="btn primary block" id="auSubmit">登录</button>
     <div class="switch">还没有账号?<span class="link" id="auToggle"> 注册一个</span></div>
     <div style="margin-top:14px;font-size:11px;color:#bbb;text-align:center">数据存于云端 · 换设备也能用</div>
-    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v27</div>
+    <div style="margin-top:6px;font-size:11px;color:#ccc;text-align:center">v28</div>
   </div>
 </div>
 
@@ -312,8 +314,9 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       <div class="field"><label>价格 <span class="req">*</span></label><input id="edPrice" type="number" inputmode="decimal" step="0.01" placeholder="0.00"></div>
     </div>
     <div class="field"><label>名称 <span class="req">*</span></label><input id="edName" placeholder="给它起个名字"></div>
+    <div class="field date-row"><label>购买日期 <span style="font-weight:400;color:#bbb">(默认今天)</span></label><input id="edDate" type="date"></div>
     <div class="grid2">
-      <div class="field"><label>购买日期 <span style="font-weight:400;color:#bbb">(默认今天)</span></label><input id="edDate" type="date"></div>
+      <div class="field"><label>购买渠道</label><div class="combo-input"><input id="edChannel" placeholder="选或输入" autocomplete="off"><span class="combo-arrow" data-combo="channel">▾</span><div class="combo-list" id="listChannel"></div></div></div>
       <div class="field"><label>颜色</label><input id="edColor" placeholder="如 黑色"></div>
     </div>
     <div class="field">
@@ -353,7 +356,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
 <div class="overlay" id="presetOverlay">
   <div class="sheet">
     <h2><span>预设管理</span><span class="x" id="presetClose">×</span></h2>
-    <div class="pm-tip">品类 → 种类 / 品牌。点种类前面的图标可自定义 emoji（留空恢复默认）；点铅笔改名会同步更新已录入物品；删除只从预设移除，不影响已录入物品。</div>
+    <div class="pm-tip">品类 → 种类 / 品牌；购买渠道为全局清单。点种类前面的图标可自定义 emoji（留空恢复默认）；点铅笔改名会同步更新已录入物品；删除只从预设移除，不影响已录入物品。</div>
 
     <div class="pm-sec">
       <div class="pm-sec-h"><span class="pm-sec-t">品类</span><span class="pm-sec-n" id="pmCatCount"></span></div>
@@ -380,6 +383,17 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         <div class="pm-add">
           <input id="newBrand" placeholder="新增品牌，如 优衣库">
           <button class="btn" id="addBrandBtn">添加</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pm-sec">
+      <div class="pm-sec-h"><span class="pm-sec-t">购买渠道（全局）</span><span class="pm-sec-n" id="pmChannelCount"></span></div>
+      <div class="pm-group">
+        <div class="pm-tags" id="presetChannels"></div>
+        <div class="pm-add">
+          <input id="newChannel" placeholder="新增渠道，如 淘宝 / 京东 / 线下">
+          <button class="btn" id="addChannelBtn">添加</button>
         </div>
       </div>
     </div>
@@ -435,6 +449,7 @@ async function enterApp(u){
   try{loadPresets();}catch(e){}
   try{loadItems();}catch(e){toast('清单加载失败:'+(e.message||'请下拉刷新'));}
   try{detectStatusCol();}catch(e){}
+  try{detectChannelCol();}catch(e){}
 }
 
 /* ============ 初始化 ============ */
@@ -473,11 +488,23 @@ async function detectStatusCol(){
   const {error}=await client.from('items').select('status').limit(1);
   statusColOk=!error;
 }
+// 购买渠道兼容:有 channel 列存云端,无列存本机(物品属性,不需卡片切换)
+let channelColOk=null;
+function localChannel(){try{return JSON.parse(localStorage.getItem('chihui_channel')||'{}');}catch(e){return {};}}
+function mergeChannel(list){
+  const lc=localChannel();
+  list.forEach(i=>{if(!i.channel&&lc[i.id])i.channel=lc[i.id];});
+}
+async function detectChannelCol(){
+  const {error}=await client.from('items').select('channel').limit(1);
+  channelColOk=!error;
+}
 async function loadItems(){
   const {data,error}=await client.from('items').select('*').order('created_at',{ascending:false});
   if(error){toast('读取失败:'+error.message);return;}
   items=data||[];
   mergeStatus(items);
+  mergeChannel(items);
   buildOptions();render();
 }
 // 切换使用状态:有列写云端+本地,无列只写本地
@@ -501,7 +528,8 @@ const DEFAULT_PRESETS={
   '鞋包':{kinds:['运动鞋','皮鞋','靴子','单肩包','双肩包'],brands:['Nike','adidas','New Balance','Coach']},
   '数码':{kinds:['手机','耳机','电脑','平板','相机'],brands:['Apple','华为','小米','索尼']},
   '家居':{kinds:['床品','厨具','收纳','灯具'],brands:['宜家','无印良品']},
-  '美妆':{kinds:['护肤','彩妆','香水'],brands:['兰蔻','雅诗兰黛','完美日记']}
+  '美妆':{kinds:['护肤','彩妆','香水'],brands:['兰蔻','雅诗兰黛','完美日记']},
+  _channels:['淘宝','京东','线下']
 };
 // 无图时的默认 emoji:一个种类一个图标(素净配色,不用粉/大红/过艳),优先按 kind 取,kind 未收录则回退品类,再回退📦
 const EMOJI={
@@ -536,10 +564,12 @@ function normalizePresets(p){
   const out={};
   if(p&&typeof p==='object')for(const c of Object.keys(p)){
     if(c==='_emoji'){out._emoji=(p._emoji&&typeof p._emoji==='object')?p._emoji:{};continue;} // 自定义emoji映射,保留
+    if(c==='_channels'){out._channels=[...new Set((Array.isArray(p._channels)?p._channels:[]).filter(Boolean))];continue;} // 全局购买渠道,保留
     const v=p[c]||{};
     out[c]={kinds:[...new Set((v.kinds||[]).filter(Boolean))],brands:[...new Set((v.brands||[]).filter(Boolean))]};
   }
   if(!out._emoji)out._emoji={};
+  if(!out._channels)out._channels=[...DEFAULT_PRESETS._channels];
   return out;
 }
 function presetCacheKey(){return 'chihui_presets_'+((user&&user.id)||'anon');}
@@ -561,7 +591,8 @@ async function savePresetsCloud(){
   try{ if(user)await client.from('presets').upsert({user_id:user.id,data:presets}); }
   catch(e){toast('预设存于本机(云端同步失败,请建presets表)');}
 }
-function categoryList(){return Object.keys(presets||{}).filter(c=>c!=='_emoji').sort(sortZh);}
+function categoryList(){return Object.keys(presets||{}).filter(c=>c!=='_emoji'&&c!=='_channels').sort(sortZh);}
+function channelList(){return (presets&&presets._channels)||[];}
 function emojiOf(kind,category){return (presets&&presets._emoji&&presets._emoji[kind])||EMOJI[kind]||EMOJI[category]||'📦';}
 function kindsOf(c){return (presets[c]&&presets[c].kinds)||[];}
 function brandsOf(c){return (presets[c]&&presets[c].brands)||[];}
@@ -590,6 +621,7 @@ function fillFilterBrands(){
 function optsForCombo(k){
   const cat=($('edCategory').value||'').trim();
   if(k==='category')return categoryList();
+  if(k==='channel')return channelList(); // 全局渠道,不依赖品类
   if(!cat){return [];}
   return k==='kind'?kindsOf(cat):brandsOf(cat);
 }
@@ -599,7 +631,7 @@ function renderCombo(k,filter){
   const arr=optsForCombo(k).filter(v=>!q||String(v).toLowerCase().includes(q));
   box.innerHTML=arr.length
     ? arr.map(v=>`<div class="opt">${esc(v)}</div>`).join('')
-    : '<div class="none">'+(k!=='category'&&!($('edCategory').value||'').trim()?'请先选品类':'无匹配项,可直接输入新增')+'</div>';
+    : '<div class="none">'+(k!=='category'&&k!=='channel'&&!($('edCategory').value||'').trim()?'请先选品类':'无匹配项,可直接输入新增')+'</div>';
 }
 function closeCombos(){document.querySelectorAll('.combo-list.open').forEach(x=>x.classList.remove('open'));}
 
@@ -626,6 +658,12 @@ function renderPresetMgr(){
         : '<span class="pm-cat-arrow">›</span>'}
     </div>`;
   }).join(''):'<div class="pm-empty" style="padding:14px">还没有品类，在下面添加一个</div>';
+  // 购买渠道(全局,不依赖品类选中)先渲染,避免下面无品类时提前 return 漏掉
+  const chs=channelList();
+  $('pmChannelCount').textContent=chs.length+' 项';
+  $('presetChannels').innerHTML=chs.length?chs.map(v=>`<span class="pm-tag"><span class="pm-tag-ico">🏷️</span><span class="pm-tag-name">${esc(v)}</span>
+    <span class="pm-tag-edit" data-editch="${esc(v)}" title="改名">✎</span>
+    <span class="pm-tag-del" data-delch="${esc(v)}" title="删除">×</span></span>`).join(''):'<span class="pm-empty">暂无，在下方添加</span>';
   const wrap=$('presetSubWrap');
   if(!presetSel){wrap.style.display='none';return;}
   wrap.style.display='block';
@@ -744,6 +782,40 @@ async function delSubValue(type,v){
   if(type==='kind'&&presets._emoji)delete presets._emoji[v]; // 清除该种类自定义图标
   await savePresetsCloud();buildOptions();render();renderPresetMgr();toast('已从预设移除');
 }
+/* ---- 购买渠道(全局清单)增删改 ---- */
+async function addChannel(){
+  const inp=$('newChannel');
+  const v=inp.value.trim();if(!v){toast('请输入渠道名');return;}
+  if(!Array.isArray(presets._channels))presets._channels=[];
+  if(presets._channels.includes(v)){toast('已存在');return;}
+  presets._channels.push(v);inp.value='';
+  await savePresetsCloud();buildOptions();renderPresetMgr();toast('已添加');
+}
+async function renameChannel(oldVal){
+  const nv=prompt('购买渠道「'+oldVal+'」改名为：',oldVal);
+  if(nv===null)return;
+  const v=nv.trim();
+  if(!v){toast('名称不能为空');return;}
+  if(v===oldVal)return;
+  const arr=presets._channels||[];
+  if(arr.includes(v)){toast('已存在同名渠道');return;}
+  const i=arr.indexOf(oldVal);if(i<0)return;
+  arr[i]=v;
+  // 同步已录入物品(全局,不限品类)
+  let n=0;const changed=[];
+  (items||[]).forEach(it=>{if(it.channel===oldVal){it.channel=v;changed.push(it.id);n++;}});
+  for(const id of changed){try{await client.from('items').update({channel:v}).eq('id',id);}catch(e){}}
+  const lc=localChannel();changed.forEach(id=>{if(lc[id]===oldVal)lc[id]=v;});
+  try{localStorage.setItem('chihui_channel',JSON.stringify(lc));}catch(e){}
+  await savePresetsCloud();buildOptions();render();renderPresetMgr();
+  toast('已改名'+(n?'，并同步 '+n+' 件物品':''));
+}
+async function delChannel(v){
+  const cnt=(items||[]).filter(it=>it.channel===v).length;
+  if(!confirm('从预设中删除「'+v+'」？\n'+(cnt?'已有 '+cnt+' 件物品使用它，物品会保留原值。\n':'')+'物品不会被删除。'))return;
+  presets._channels=(presets._channels||[]).filter(x=>x!==v);
+  await savePresetsCloud();buildOptions();renderPresetMgr();toast('已从预设移除');
+}
 function buildOptions(){
   const fill=(sel,arr,label)=>{
     const cur=$(sel).value;
@@ -809,6 +881,7 @@ function render(){
         <div class="tags">
           <span class="pill status ${using?'on':'off'}" data-status="${it.id}">${using?'使用中':'吃灰中'}</span>
           <span class="pill price">${money(it.price)}</span>
+          ${it.channel?`<span class="pill channel">${esc(it.channel)}</span>`:''}
         </div>
         <div class="edit" data-edit="${it.id}">✎</div>
       </div>
@@ -843,6 +916,7 @@ function openEditor(it){
   $('edName').value=it?.name||'';
   $('edDate').value=it?.purchase_date||'';
   $('edColor').value=it?.color||'';
+  $('edChannel').value=it?.channel||'';
   $('edCount').value=it?.use_count??0;
   $('edNote').value=it?.note||'';
   setBilling(it?.billing||'time');
@@ -897,6 +971,7 @@ async function saveItem(){
   if(!user||!user.id){toast('登录状态失效,请退出后重新登录');return;}
   const name=$('edName').value.trim(), price=parseFloat($('edPrice').value);
   const category=$('edCategory').value.trim(), kind=$('edKind').value.trim(), brand=$('edBrand').value.trim();
+  const channel=$('edChannel').value.trim(); // 选填
   if(!category||!kind||!brand||!name||isNaN(price)){toast('请填齐 品类/种类/品牌/名称/价格');return;}
   const btn=$('edSave');btn.disabled=true;btn.innerHTML='<span class="spin"></span> 保存中';
   try{
@@ -919,6 +994,8 @@ async function saveItem(){
       image_url, image_path
     };
     if(statusColOk)payload.status=formStatus;
+    // 有 channel 列时把渠道写进 payload;无列时不写,避免 insert 报错(渠道走本地缓存)
+    if(channelColOk)payload.channel=channel||null;
     let error, savedId=editingId;
     if(editingId){({error}=await client.from('items').update(payload).eq('id',editingId));}
     else{
@@ -928,12 +1005,15 @@ async function saveItem(){
     if(error)throw error;
     // 状态始终写本地缓存(有列时云端也有,双保险)
     if(savedId){const lc=localStatus();lc[savedId]=formStatus;try{localStorage.setItem('chihui_status',JSON.stringify(lc));}catch(e){}}
+    // 渠道始终写本地缓存(有列时云端也有,双保险);清空则删除缓存项
+    if(savedId){const cc=localChannel();if(channel)cc[savedId]=channel;else delete cc[savedId];try{localStorage.setItem('chihui_channel',JSON.stringify(cc));}catch(e){}}
     if(imagePathChanged&&oldImagePath&&oldImagePath!==image_path)await removeImage(oldImagePath);
     // 新录入的分类值自动纳入预设库(该品类下)——失败不能阻断物品已保存的结果
     try{
       if(!presets)presets={};
       if(!presets[category]||!Array.isArray(presets[category].kinds)||!Array.isArray(presets[category].brands))presets[category]={kinds:[],brands:[]};
       [['kinds',kind],['brands',brand]].forEach(([f,v])=>{if(v&&!presets[category][f].includes(v))presets[category][f].push(v);});
+      if(channel){if(!Array.isArray(presets._channels))presets._channels=[];if(!presets._channels.includes(channel))presets._channels.push(channel);}
       await savePresetsCloud();
     }catch(e){/* 预设写入失败不影响物品保存 */}
     closeEditor();await loadItems();toast(editingId?'已保存':'已添加');
@@ -974,7 +1054,7 @@ function bind(){
     if(!brandsOf(cat).includes($('edBrand').value.trim()))$('edBrand').value='';
     renderCombo('kind','');renderCombo('brand','');
   };
-  ['category','kind','brand'].forEach(k=>{
+  ['category','kind','brand','channel'].forEach(k=>{
     const input=$('ed'+k[0].toUpperCase()+k.slice(1));
     const box=$('list'+k[0].toUpperCase()+k.slice(1));
     const arrow=document.querySelector('.combo-arrow[data-combo="'+k+'"]');
@@ -1001,9 +1081,17 @@ function bind(){
   $('addCatBtn').onclick=addCategory;
   $('addKindBtn').onclick=()=>addSubValue('kind');
   $('addBrandBtn').onclick=()=>addSubValue('brand');
+  $('addChannelBtn').onclick=addChannel;
   $('newCat').onkeydown=e=>{if(e.key==='Enter')addCategory();};
   $('newKind').onkeydown=e=>{if(e.key==='Enter')addSubValue('kind');};
   $('newBrand').onkeydown=e=>{if(e.key==='Enter')addSubValue('brand');};
+  $('newChannel').onkeydown=e=>{if(e.key==='Enter')addChannel();};
+  $('presetChannels').onclick=e=>{
+    const ed=e.target.closest('[data-editch]');
+    if(ed){e.stopPropagation();renameChannel(ed.dataset.editch);return;}
+    const del=e.target.closest('[data-delch]');
+    if(del){e.stopPropagation();delChannel(del.dataset.delch);}
+  };
   $('presetCats').onclick=e=>{
     const ed=e.target.closest('[data-editcat]');
     if(ed){e.stopPropagation();renameCategory(ed.dataset.editcat);return;}
